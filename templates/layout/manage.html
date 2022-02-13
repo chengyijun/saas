@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{% static "css/init.css" %}"></link>
 
     <style>
-        .navbar-default {
+        .navbar-inverse {
             border-radius: 0;
         }
     </style>
@@ -33,10 +33,18 @@
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav">
-                <li class="active"><a href="#">产品功能 <span class="sr-only">(current)</span></a></li>
-                <li><a href="#">企业方案</a></li>
-                <li><a href="#">帮助文档</a></li>
-                <li><a href="#">价格</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                       aria-expanded="false">当前项目 <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#">aaa</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li><a href="#">bbb</a></li>
+                    </ul>
+                </li>
+                <li><a href="{% url "web:wiki" "1" %}">wiki</a></li>
+                <li><a href="{% url "web:file" project_id="1" %}">文件</a></li>
+                <li><a href="{% url "web:issuse" project_id="1" %}">问题</a></li>
 
             </ul>
 

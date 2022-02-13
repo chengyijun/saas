@@ -108,3 +108,18 @@ class LoginView(View):
 class ProjectListView(View):
     def get(self, request: WSGIRequest):
         return render(request, "project_list.html")
+
+
+class WIKIView(View):
+    def get(self, request: WSGIRequest, project_id: int):
+        return render(request, "wiki.html")
+
+
+class FileView(View):
+    def get(self, request: WSGIRequest, project_id: int):
+        return render(request, "file.html")
+
+
+class IssuseView(View):
+    def get(self, request: WSGIRequest, project_id: int):
+        return render(request, "issuse.html")
