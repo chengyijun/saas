@@ -1,0 +1,143 @@
+{% extends "layout/base.html" %}
+
+{% block title %}
+    注册页面
+{% endblock title %}
+
+{% block css %}
+    <style>
+        .container {
+        }
+
+        .reg h2 {
+
+            text-align: center;
+        }
+
+        .reg {
+            box-shadow: 0px 0px 10px 5px rgba(0, 0, 0, 0.2);
+            width: 600px;
+            margin: 100px auto 10px;
+            padding: 10px;
+        }
+
+        .error {
+            position: absolute;
+            color: red;
+        }
+    </style>
+{% endblock css %}
+{% block content %}
+    <div class="container">
+        <div class="reg">
+            <h2>用户注册</h2>
+            <form id="reg-form">
+                {% for field in form %}
+                    {% if field.name != "code" %}
+                        <div class="form-group">
+                            <label for="exampleInputEmail1">{{ field.label }}</label>
+                            {{ field }}
+                            <div class="error"></div>
+                        </div>
+                    {% else %}
+                        <div class="form-group">
+                            <label for=" exampleInputEmail1">{{ field.label }}</label>
+                            <div class="row">
+                                <div class="col-md-6">{{ field }}
+                                    <div class="error"></div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <input type="button" id="sms-btn" class="btn" value="获取验证码">
+                                </div>
+                            </div>
+
+                        </div>
+                    {% endif %}
+                {% endfor %}
+
+                {#        填坑： 如果表单使用ajax提交 则不要在表单尾部（内部）使用button 可以在表单外部使用button  #}
+                {#                <button id="reg-btn" class="btn btn-primary btn-lg"></button>#}
+                <input type="button" id="reg-btn" class="btn btn-primary btn-lg" value="注 册">
+            </form>
+            {#            {% for label,error in form.errors.items %}#}
+            {#                {{ error.0 }}#}
+            {#            {% endfor %}#}
+            {#            {{ form.errors.phone.0 }}#}
+        </div>
+    </div>
+{% endblock content %}
+
+
+{% block js %}
+    <script>
+        $(function () {
+            submitRegisterForm()
+            sendSMS()
+        })
+
+        function sendSMS() {
+            const smsBtn = $("#sms-btn")
+            smsBtn.click(function () {
+                smsBtn.attr("disabled", true)
+                $.ajax({
+                    url: "{% url "web:sendsms" %}",
+                    type: "get",
+                    data: {
+                        phone: $("#id_phone").val()
+                    },
+                    dataType: "json",
+                    success: function (res) {
+                        console.log(res)
+                        {#    倒计时60s #}
+                        let count = 3
+                        let timer = setInterval(function () {
+                            if (count <= 0) {
+                                smsBtn.val("获取验证码")
+                                smsBtn.attr("disabled", false)
+                                clearInterval(timer)
+                            } else {
+                                smsBtn.val(count + "秒后重新发送")
+                                count--
+                            }
+                        }, 1000)
+                    },
+                    error: function (err) {
+                        console.log(err)
+                    }
+                })
+            })
+        }
+
+        function submitRegisterForm() {
+            $("#reg-btn").click(function () {
+                {#console.log(2222)#}
+                {# 发送请求前 先清除错误信息#}
+                $(".error").text("")
+                $.ajax({
+                    type: "POST",
+                    url: "{% url "web:register" %}",
+                    data: $("#reg-form").serialize(),
+                    dataType: "json",
+                    success: function (res) {
+                        {#console.log(res)#}
+                        {#console.log(333)#}
+                        if (res.status) {
+                            console.log("成功")
+                            location.href = res.data
+                        } else {
+                            $.each(res.errors, function (k, v) {
+                                {#console.log(k, v[0])#}
+                                {# 由于表单中 div.error 总是放在每个输入字段之后 所以通过 next()获取 #}
+                                $("#id_" + k).next().text(v[0])
+                            })
+                        }
+                    },
+                    error: function (err) {
+                        console.log(err)
+                    }
+                })
+            })
+        }
+    </script>
+{% endblock js %}

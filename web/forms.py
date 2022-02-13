@@ -1,0 +1,124 @@
+import re
+
+from django import forms
+from django.core.handlers.wsgi import WSGIRequest
+
+from web.models import UserInfo
+from web.utils.func import encrypt
+
+
+class BootstrapStyle:
+    def __init__(self, request: WSGIRequest, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.request = request
+        # 为通过 ModelForm渲染的前端表单 添加属性
+        for field in iter(self.fields):
+            self.fields[field].widget.attrs.update({
+                'class': 'form-control',
+                'placeholder': f"请输入{self.fields[field].label}"
+            })
+
+
+class RegisterModelForm(BootstrapStyle, forms.ModelForm):
+    ensure_password = forms.CharField(label="确认密码", max_length=64, widget=forms.PasswordInput)
+    code = forms.CharField(label="验证码", max_length=4)
+
+    def clean_username(self):
+        username = self.cleaned_data.get("username")
+        exists = UserInfo.objects.is_user_exists_by_name(username)
+        if exists:
+            self.add_error("username", "用户名已存在")
+        return username
+
+    def clean_password(self):
+        password = self.cleaned_data.get("password")
+
+        encrypt_password = encrypt(password)
+
+        return encrypt_password
+
+    def clean_ensure_password(self):
+        password = self.cleaned_data.get("password")
+        ensure_password = encrypt(self.cleaned_data.get("ensure_password"))
+        if password != ensure_password:
+            self.add_error("ensure_password", "两次密码输入不一致")
+
+    def clean_phone(self):
+        # print("clean_phone")
+        phone = self.cleaned_data.get("phone")
+        # print("phone", phone)
+        findall = re.findall(r"^1[3-9][0-9]{9}$", phone)
+        # print(findall)
+        if not findall:
+            self.add_error("phone", "手机号格式不正确")
+        return phone
+
+    def clean_code(self):
+        code = self.cleaned_data.get("code")
+        if code != self.request.session.get("code"):
+            self.add_error("code", "验证码不正确")
+            return code
+
+    class Meta:
+        model = UserInfo
+        # fields = "__all__"
+        fields = ["username", "password", "ensure_password", "email", "phone", "code"]
+        widgets = {
+            "password": forms.PasswordInput,
+        }
+
+
+class SMSLoginForm(BootstrapStyle, forms.Form):
+    phone = forms.CharField(label="手机号", max_length=11)
+    code = forms.CharField(label="验证码", max_length=4)
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get("phone")
+        findall = re.findall(r"^1[3-9][0-9]{9}$", phone)
+        if not findall:
+            self.add_error("phone", "手机号格式不正确")
+
+        # 验证手机号是否已注册
+        user_object = UserInfo.objects.filter(phone=phone).first()
+        if not user_object:
+            self.add_error("phone", "请先注册")
+        # 将登录用户 写入session
+        self.request.session.setdefault("user_id", user_object.id)
+        return phone
+
+    def clean_code(self):
+        code = self.cleaned_data.get("code")
+        if code != self.request.session.get("code"):
+            self.add_error("code", "验证码不正确")
+            return code
+
+
+class LoginForm(BootstrapStyle, forms.Form):
+    username = forms.CharField(label="用户名", max_length=20)
+    password = forms.CharField(label="密码", max_length=20, widget=forms.PasswordInput())
+    code = forms.CharField(label="验证码", max_length=4)
+
+    def clean_username(self):
+        username = self.cleaned_data.get("username")
+        if not UserInfo.objects.filter(username=username).exists():
+            self.add_error("username", "请先注册")
+        return username
+
+    def clean_password(self):
+        username = self.cleaned_data.get("username")
+        password = self.cleaned_data.get("password")
+        encrypt_password = encrypt(password)
+        user = UserInfo.objects.filter(username=username, password=encrypt_password).first()
+        if not user:
+            self.add_error("password", "密码错误")
+        # 将登录用户 写入session
+        self.request.session.setdefault("user_id", user.id)
+        return encrypt_password
+
+    def clean_code(self):
+        code = self.cleaned_data.get("code")
+        session_code_str = self.request.session.get("pcode")
+        # print(code, session_code_str)
+        if code != session_code_str:
+            self.add_error("code", "验证码不正确")
+            return code

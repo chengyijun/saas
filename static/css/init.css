@@ -1,0 +1,9 @@
+@charset "UTF-8";
+/* 去除bootstrap中的 按钮外边框 */
+.btn {
+    outline: none !important;
+}
+
+　　button {
+    outline: none !important;
+}
