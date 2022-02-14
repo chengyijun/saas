@@ -39,6 +39,12 @@
             justify-content: flex-start;
 
         }
+
+        #jp {
+            display: flex;
+            justify-content: flex-start;
+
+        }
     </style>
 {% endblock css %}
 {% block content %}
@@ -122,8 +128,20 @@
             <div class="panel-heading">
                 我参与的项目
             </div>
-            <div class="panel-body">
-                面板内容
+            <div class="panel-body" id="jp">
+                {% for item in join_projects %}
+                    <div class="project">
+                        <div class="up">
+                            {{ item.project.name }}
+                        </div>
+                        <div class="down">
+                            <span><i class="fa fa-users" aria-hidden="true"></i> {{ item.project.join_count }}</span>
+                            <span class="opadd" url="{% url "web:project_star" project_id=item.project.id %}"><i
+                                    class="fa fa-star-o"
+                                    aria-hidden="true"></i></span>
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
         </div>
     </div>

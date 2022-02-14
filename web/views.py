@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.views import View
 
 from web.forms import RegisterModelForm, SMSLoginForm, LoginForm, ProjectModelForm
-from web.models import Transaction, PricePolicy, Project
+from web.models import Transaction, PricePolicy, Project, ProjectUser
 from web.utils.func import send_sms, create_png, get_order
 
 
@@ -116,10 +116,21 @@ class ProjectListView(View):
                 own_projects_star.append(p)
             else:
                 own_projects_nostar.append(p)
-
+        # 查询出我参加的项目
+        join_projects = ProjectUser.objects.filter(user=request.tracer.user).all()
+        join_projects_star = []
+        join_projects_nostar = []
+        for p in join_projects:
+            if p.star:
+                join_projects_star.append(p)
+            else:
+                join_projects_nostar.append(p)
         form = ProjectModelForm(request)
         return render(request, "project_list.html",
-                      {"form": form, "own_projects": own_projects_nostar, "star_projects": own_projects_star})
+                      {"form": form, "own_projects": own_projects_nostar,
+                       "star_projects": own_projects_star,
+                       "join_projects": join_projects_nostar
+                       })
 
     def post(self, request: WSGIRequest):
         form = ProjectModelForm(request, data=request.POST)
@@ -149,7 +160,7 @@ class IssuseView(View):
 class ProjectStarView(View):
     def get(self, request: WSGIRequest, project_id: int):
         obj: Project = Project.objects.filter(creator=request.tracer.user, id=project_id, star=False).first()
-        print(obj)
-        obj.star = True
-        obj.save()
+        if obj:
+            obj.star = True
+            obj.save()
         return JsonResponse({})
