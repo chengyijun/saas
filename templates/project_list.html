@@ -8,12 +8,44 @@
         #addProject {
             margin-bottom: 10px;
         }
+
+        .project {
+            width: 150px;
+            height: 100px;
+            margin-right: 10px;
+        }
+
+        .project .up {
+            background-color: lightblue;
+            height: 70px;
+            line-height: 70px;
+            text-align: center;
+        }
+
+        .project .down {
+            background-color: lightgreen;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        #sp {
+            display: flex;
+            justify-content: flex-start;
+
+        }
+
+        #op {
+            display: flex;
+            justify-content: flex-start;
+
+        }
     </style>
 {% endblock css %}
 {% block content %}
     <div class="container-fluid">
 
         {% all_project_list request %}
+
         <!-- 模态框（Modal） -->
         <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
              aria-hidden="true">
@@ -49,8 +81,19 @@
             <div class="panel-heading">
                 星标项目
             </div>
-            <div class="panel-body">
-                面板内容
+            <div class="panel-body" id="sp">
+                {% for item in star_projects %}
+                    <div class="project">
+                        <div class="up">
+                            {{ item.name }}
+                        </div>
+                        <div class="down">
+                            <span><i class="fa fa-users" aria-hidden="true"></i> {{ item.join_count }}</span>
+                            <a href="{% url "web:project_star" project_id=item.id %}"><i class="fa fa-star-o"
+                                                                                         aria-hidden="true"></i></a>
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
         </div>
 
@@ -58,8 +101,20 @@
             <div class="panel-heading">
                 我的项目
             </div>
-            <div class="panel-body">
-                面板内容
+            <div class="panel-body" id="op">
+                {% for item in own_projects %}
+                    <div class="project">
+                        <div class="up">
+                            {{ item.name }}
+                        </div>
+                        <div class="down">
+                            <span><i class="fa fa-users" aria-hidden="true"></i> {{ item.join_count }}</span>
+                            <span class="opadd" url="{% url "web:project_star" project_id=item.id %}"><i
+                                    class="fa fa-star-o"
+                                    aria-hidden="true"></i></span>
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
         </div>
 
@@ -80,6 +135,7 @@
         $(function () {
             submitProject()
             handleModel()
+            addStar()
         })
 
         function submitProject() {
@@ -123,6 +179,27 @@
                 // 当模态对话框打开后 自动调用该函数
                 $("#reg-form")[0].reset()
                 $(".error").empty()
+            })
+        }
+
+        function addStar() {
+            $.each($(".opadd"), function (index, value) {
+                $(value).click(function () {
+
+                    let url = $(this).attr("url")
+
+                    $.ajax({
+                        url: url,
+                        type: "get",
+                        dataType: "json",
+                        success: function (res) {
+                            location.reload()
+                        },
+                        error: function (err) {
+                            console.log(err)
+                        }
+                    })
+                })
             })
         }
     </script>

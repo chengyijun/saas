@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.views import View
 
 from web.forms import RegisterModelForm, SMSLoginForm, LoginForm, ProjectModelForm
-from web.models import Transaction, PricePolicy
+from web.models import Transaction, PricePolicy, Project
 from web.utils.func import send_sms, create_png, get_order
 
 
@@ -107,8 +107,19 @@ class LoginView(View):
 
 class ProjectListView(View):
     def get(self, request: WSGIRequest):
+        # 查询出我创建的项目
+        own_projects = Project.objects.filter(creator=request.tracer.user).all()
+        own_projects_star = []
+        own_projects_nostar = []
+        for p in own_projects:
+            if p.star:
+                own_projects_star.append(p)
+            else:
+                own_projects_nostar.append(p)
+
         form = ProjectModelForm(request)
-        return render(request, "project_list.html", {"form": form})
+        return render(request, "project_list.html",
+                      {"form": form, "own_projects": own_projects_nostar, "star_projects": own_projects_star})
 
     def post(self, request: WSGIRequest):
         form = ProjectModelForm(request, data=request.POST)
@@ -133,3 +144,12 @@ class FileView(View):
 class IssuseView(View):
     def get(self, request: WSGIRequest, project_id: int):
         return render(request, "issuse.html")
+
+
+class ProjectStarView(View):
+    def get(self, request: WSGIRequest, project_id: int):
+        obj: Project = Project.objects.filter(creator=request.tracer.user, id=project_id, star=False).first()
+        print(obj)
+        obj.star = True
+        obj.save()
+        return JsonResponse({})
