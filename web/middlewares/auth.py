@@ -1,15 +1,18 @@
+import datetime
+
 from django.conf import settings
 from django.core.handlers.wsgi import WSGIRequest
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.deprecation import MiddlewareMixin
 
-from web.models import UserInfo
+from web.models import UserInfo, Transaction, PricePolicy
 
 
 class Tracer:
     def __init__(self):
         self.user = None
+        self.policy = None
 
 
 class AuthMiddleware(MiddlewareMixin):
@@ -28,3 +31,22 @@ class AuthMiddleware(MiddlewareMixin):
         tracer.user = user
         # print(tracer)
         request.tracer = tracer
+
+        # 获取登录用户的价格策略 并绑定到 request.tracer对象上
+        transaction_obj: Transaction = Transaction.objects.filter(user=request.tracer.user).order_by("-id").first()
+        # 判断最后一笔交易记录 是否是付费版
+        policy_obj = None
+        if transaction_obj:
+            policy_obj = transaction_obj.price_policy
+
+            if policy_obj.category == 2:
+                # 付费版
+                if transaction_obj.end_datetime and transaction_obj.end_datetime < datetime.datetime.now():
+                    # 已过期
+                    policy_obj = PricePolicy.objects.filter(pk=1).first()
+            else:
+                # 免费版
+                policy_obj = PricePolicy.objects.filter(pk=1).first()
+        tracer.policy = policy_obj
+        # if policy_obj:
+        #     print("*********", policy_obj.project_num)

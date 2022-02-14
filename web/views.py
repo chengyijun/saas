@@ -8,7 +8,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
 
-from web.forms import RegisterModelForm, SMSLoginForm, LoginForm
+from web.forms import RegisterModelForm, SMSLoginForm, LoginForm, ProjectModelForm
 from web.models import Transaction, PricePolicy
 from web.utils.func import send_sms, create_png, get_order
 
@@ -107,7 +107,17 @@ class LoginView(View):
 
 class ProjectListView(View):
     def get(self, request: WSGIRequest):
-        return render(request, "project_list.html")
+        form = ProjectModelForm(request)
+        return render(request, "project_list.html", {"form": form})
+
+    def post(self, request: WSGIRequest):
+        form = ProjectModelForm(request, data=request.POST)
+
+        if not form.is_valid():
+            return JsonResponse({"status": False, "errors": form.errors})
+        form.instance.creator = request.tracer.user
+        form.save()
+        return JsonResponse({"status": True})
 
 
 class WIKIView(View):

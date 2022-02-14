@@ -3,7 +3,7 @@ import re
 from django import forms
 from django.core.handlers.wsgi import WSGIRequest
 
-from web.models import UserInfo
+from web.models import UserInfo, Project
 from web.utils.func import encrypt
 
 
@@ -122,3 +122,19 @@ class LoginForm(BootstrapStyle, forms.Form):
         if code != session_code_str:
             self.add_error("code", "验证码不正确")
             return code
+
+
+class ProjectModelForm(BootstrapStyle, forms.ModelForm):
+
+    def clean_name(self):
+        name = self.cleaned_data.get("name")
+        if Project.objects.filter(name=name, creator=self.request.tracer.user).exists():
+            self.add_error("name", "项目已存在")
+        return name
+
+    class Meta:
+        model = Project
+        fields = ["name", "color", "desc"]
+        widgets = {
+            "desc": forms.Textarea
+        }

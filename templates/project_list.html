@@ -1,1 +1,129 @@
 {% extends "layout/manage.html" %}
+{% load project %}
+{% block title %}
+    项目列表
+{% endblock title %}
+{% block css %}
+    <style>
+        #addProject {
+            margin-bottom: 10px;
+        }
+    </style>
+{% endblock css %}
+{% block content %}
+    <div class="container-fluid">
+
+        {% all_project_list request %}
+        <!-- 模态框（Modal） -->
+        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModalLabel">添加项目</h4>
+                    </div>
+                    <div class="modal-body">
+
+                        <form id="reg-form">
+                            {% for field in form %}
+                                <div class="form-group">
+                                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                    <div class="error"></div>
+                                </div>
+
+                            {% endfor %}
+                        </form>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-primary" id="submitBtn">添加</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal -->
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                星标项目
+            </div>
+            <div class="panel-body">
+                面板内容
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                我的项目
+            </div>
+            <div class="panel-body">
+                面板内容
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                我参与的项目
+            </div>
+            <div class="panel-body">
+                面板内容
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+
+{% block js %}
+    <script>
+        $(function () {
+            submitProject()
+            handleModel()
+        })
+
+        function submitProject() {
+            $("#submitBtn").click(function () {
+                $(".error").empty()
+                $.ajax({
+                    type: "POST",
+                    url: "{% url "web:project_list" %}",
+                    data: $("#reg-form").serialize(),
+                    dataType: "json",
+                    success: function (res) {
+                        if (res.status) {
+                            console.log("成功")
+                            location.reload()
+                        } else {
+                            $.each(res.errors, function (k, v) {
+                                // console.log(k, v[0])
+                                // 由于表单中 div.error 总是放在每个输入字段之后 所以通过 next()获取
+                                $("#id_" + k).next().text(v[0])
+                            })
+                        }
+                    },
+                    error: function (err) {
+                        console.log(err)
+                    }
+                })
+            })
+        }
+
+        function handleModel() {
+            $('#myModal').on('show.bs.modal', function (event) {
+                {#var button = $(event.relatedTarget) // Button that triggered the modal#}
+                {#var recipient = button.data('whatever') // Extract info from data-* attributes#}
+                {#// If necessary, you could initiate an AJAX request here (and then do the updating in a callback).#}
+                {#// Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.#}
+                {#var modal = $(this)#}
+                {#modal.find('.modal-title').text('New message to ' + recipient)#}
+                {#modal.find('.modal-body input').val(recipient)#}
+
+                {#console.log(555)#}
+                // 当模态对话框打开后 自动调用该函数
+                $("#reg-form")[0].reset()
+                $(".error").empty()
+            })
+        }
+    </script>
+{% endblock js %}
