@@ -2,17 +2,22 @@ import re
 
 from django import forms
 from django.core.handlers.wsgi import WSGIRequest
+from django.forms import RadioSelect
 
 from web.models import UserInfo, Project
 from web.utils.func import encrypt
 
 
 class BootstrapStyle:
+    exclude_names = []
+
     def __init__(self, request: WSGIRequest, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.request = request
         # 为通过 ModelForm渲染的前端表单 添加属性
         for field in iter(self.fields):
+            if field in self.exclude_names:
+                continue
             self.fields[field].widget.attrs.update({
                 'class': 'form-control',
                 'placeholder': f"请输入{self.fields[field].label}"
@@ -124,7 +129,13 @@ class LoginForm(BootstrapStyle, forms.Form):
             return code
 
 
+class ColorRadioSelect(RadioSelect):
+    template_name = 'widgets/color_radio/radio.html'
+    option_template_name = 'widgets/color_radio/radio_option.html'
+
+
 class ProjectModelForm(BootstrapStyle, forms.ModelForm):
+    exclude_names = ["color"]
 
     def clean_name(self):
         name = self.cleaned_data.get("name")
@@ -136,5 +147,6 @@ class ProjectModelForm(BootstrapStyle, forms.ModelForm):
         model = Project
         fields = ["name", "color", "desc"]
         widgets = {
+            'color': ColorRadioSelect(attrs={'class': 'color-radio'}),
             "desc": forms.Textarea
         }

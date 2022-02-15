@@ -13,18 +13,17 @@
             width: 150px;
             height: 100px;
             margin-right: 10px;
+            box-shadow: 0px 0px 10px 5px rgba(0, 0, 0, 0.2);
         }
 
         .project .up {
-            background-color: lightblue;
-            height: 70px;
+        {#background-color: lightblue;#} height: 70px;
             line-height: 70px;
             text-align: center;
         }
 
         .project .down {
-            background-color: lightgreen;
-            display: flex;
+        {#background-color: lightgreen;#} display: flex;
             justify-content: space-around;
         }
 
@@ -44,6 +43,28 @@
             display: flex;
             justify-content: flex-start;
 
+        }
+
+        .color-radio label {
+            margin-left: 0;
+            padding-left: 0;
+        }
+
+        /*隐藏input框*/
+        .color-radio input[type="radio"] {
+            display: none;
+        }
+
+        .color-radio input[type="radio"] + .cycle {
+            display: inline-block;
+            height: 25px;
+            width: 25px;
+            border-radius: 50%;
+            border: 2px solid #dddddd;
+        }
+
+        .color-radio input[type="radio"]:checked + .cycle {
+            border: 2px solid black;
         }
     </style>
 {% endblock css %}
@@ -89,7 +110,7 @@
             </div>
             <div class="panel-body" id="sp">
                 {% for item in star_projects %}
-                    <div class="project">
+                    <div class="project" style="background-color:{{ item.get_color_display }};">
                         <div class="up">
                             {{ item.name }}
                         </div>
@@ -103,7 +124,7 @@
                 {% endfor %}
 
                 {% for item in join_projects_star %}
-                    <div class="project">
+                    <div class="project" style="background-color:{{ item.project.get_color_display }};">
                         <div class="up">
                             {{ item.project.name }}
                         </div>
@@ -124,7 +145,7 @@
             </div>
             <div class="panel-body" id="op">
                 {% for item in own_projects %}
-                    <div class="project">
+                    <div class="project" style="background-color:{{ item.get_color_display }};">
                         <div class="up">
                             {{ item.name }}
                         </div>
@@ -145,7 +166,7 @@
             </div>
             <div class="panel-body" id="jp">
                 {% for item in join_projects %}
-                    <div class="project">
+                    <div class="project" style="background-color:{{ item.project.get_color_display }};">
                         <div class="up">
                             {{ item.project.name }}
                         </div>
