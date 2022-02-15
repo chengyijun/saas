@@ -12,18 +12,20 @@
         .project {
             width: 150px;
             height: 100px;
-            margin-right: 10px;
+            margin-right: 20px;
             box-shadow: 0px 0px 10px 5px rgba(0, 0, 0, 0.2);
         }
 
         .project .up {
-        {#background-color: lightblue;#} height: 70px;
+            height: 70px;
             line-height: 70px;
             text-align: center;
+            color: #fff;
+            font-weight: bold;
         }
 
         .project .down {
-        {#background-color: lightgreen;#} display: flex;
+            display: flex;
             justify-content: space-around;
         }
 
@@ -65,6 +67,10 @@
 
         .color-radio input[type="radio"]:checked + .cycle {
             border: 2px solid black;
+        }
+
+        a {
+            text-decoration: none;
         }
     </style>
 {% endblock css %}
@@ -145,17 +151,21 @@
             </div>
             <div class="panel-body" id="op">
                 {% for item in own_projects %}
-                    <div class="project" style="background-color:{{ item.get_color_display }};">
-                        <div class="up">
-                            {{ item.name }}
+
+                    <a href="{% url "web:wiki" project_id=item.id %}">
+                        <div class="project" style="background-color:{{ item.get_color_display }};">
+                            <div class="up">
+                                {{ item.name }}
+                            </div>
+                            <div class="down">
+                                <span><i class="fa fa-users" aria-hidden="true"></i> {{ item.join_count }}</span>
+                                <span class="opadd" url="{% url "web:project_star" project_id=item.id %}"><i
+                                        class="fa fa-star-o"
+                                        aria-hidden="true"></i></span>
+                            </div>
                         </div>
-                        <div class="down">
-                            <span><i class="fa fa-users" aria-hidden="true"></i> {{ item.join_count }}</span>
-                            <span class="opadd" url="{% url "web:project_star" project_id=item.id %}"><i
-                                    class="fa fa-star-o"
-                                    aria-hidden="true"></i></span>
-                        </div>
-                    </div>
+                    </a>
+
                 {% endfor %}
             </div>
         </div>

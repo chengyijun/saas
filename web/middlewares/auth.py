@@ -6,13 +6,14 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.deprecation import MiddlewareMixin
 
-from web.models import UserInfo, Transaction, PricePolicy
+from web.models import UserInfo, Transaction, PricePolicy, Project, ProjectUser
 
 
 class Tracer:
     def __init__(self):
         self.user = None
         self.policy = None
+        self.current_project = None
 
 
 class AuthMiddleware(MiddlewareMixin):
@@ -50,3 +51,19 @@ class AuthMiddleware(MiddlewareMixin):
         tracer.policy = policy_obj
         # if policy_obj:
         #     print("*********", policy_obj.project_num)
+
+    def process_view(self, request: WSGIRequest, view_func, view_args, view_kwargs):
+
+        project_id = view_kwargs.get("project_id")
+        if request.path_info.startswith("/project/") and project_id:
+            my_project: Project = Project.objects.filter(id=project_id, creator=request.tracer.user).first()
+            join_project: ProjectUser = ProjectUser.objects.filter(project_id=project_id,
+                                                                   user=request.tracer.user).first()
+
+            if my_project:
+                request.tracer.current_project = my_project
+            elif join_project:
+                request.tracer.current_project = join_project.project
+            else:
+                return redirect(reverse("web:project_list"))
+        print("当前进入项目", request.tracer.current_project)

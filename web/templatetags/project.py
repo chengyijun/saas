@@ -1,7 +1,7 @@
 from django.core.handlers.wsgi import WSGIRequest
 from django.template import Library
 
-from web.models import Project
+from web.models import Project, ProjectUser
 
 register = Library()
 
@@ -15,3 +15,10 @@ def all_project_list(request: WSGIRequest):
     is_show = total_count < max_count
     # print(total_count, max_count)
     return {"is_show": is_show}
+
+
+@register.inclusion_tag("inclusion/project_select.html")
+def project_select(request: WSGIRequest):
+    my_projects = Project.objects.filter(creator=request.tracer.user).all()
+    join_projects = ProjectUser.objects.filter(user=request.tracer.user).all()
+    return {"my_projects": my_projects, "join_projects": join_projects}
