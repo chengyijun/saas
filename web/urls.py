@@ -32,6 +32,7 @@ urlpatterns = [
     path("logout/", views.LogoutView.as_view(), name="logout"),
     path("project/list/", views.ProjectListView.as_view(), name="project_list"),
     path("project/<int:project_id>/star/", views.ProjectStarView.as_view(), name="project_star"),
+    path("project/<int:project_id>/unstar/", views.ProjectUnstarView.as_view(), name="project_unstar"),
 
     path("project/<int:project_id>/", include([
         path("wiki/", views.WIKIView.as_view(), name="wiki"),

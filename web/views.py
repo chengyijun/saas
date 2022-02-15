@@ -129,6 +129,7 @@ class ProjectListView(View):
         return render(request, "project_list.html",
                       {"form": form, "own_projects": own_projects_nostar,
                        "star_projects": own_projects_star,
+                       "join_projects_star": join_projects_star,
                        "join_projects": join_projects_nostar
                        })
 
@@ -159,8 +160,35 @@ class IssuseView(View):
 
 class ProjectStarView(View):
     def get(self, request: WSGIRequest, project_id: int):
+        """我创建的项目 星标"""
         obj: Project = Project.objects.filter(creator=request.tracer.user, id=project_id, star=False).first()
         if obj:
             obj.star = True
             obj.save()
+        """我参与的项目 星标"""
+        obj2: ProjectUser = ProjectUser.objects.filter(user=request.tracer.user, project_id=project_id,
+                                                       star=False).first()
+        if obj2:
+            # print(obj2.project.id)
+            obj2.star = True
+            obj2.create_time = datetime.datetime.now()
+            obj2.save()
+        return JsonResponse({})
+
+
+class ProjectUnstarView(View):
+    def get(self, request: WSGIRequest, project_id: int):
+        """我创建的项目 取消星标"""
+        obj: Project = Project.objects.filter(creator=request.tracer.user, id=project_id, star=True).first()
+        if obj:
+            obj.star = False
+            obj.save()
+        """我参与的项目 取消星标"""
+        obj2: ProjectUser = ProjectUser.objects.filter(user=request.tracer.user, project_id=project_id,
+                                                       star=True).first()
+        if obj2:
+            # print(obj2.project.id)
+            obj2.star = False
+            obj2.create_time = datetime.datetime.now()
+            obj2.save()
         return JsonResponse({})
