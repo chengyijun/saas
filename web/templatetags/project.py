@@ -21,4 +21,9 @@ def all_project_list(request: WSGIRequest):
 def project_select(request: WSGIRequest):
     my_projects = Project.objects.filter(creator=request.tracer.user).all()
     join_projects = ProjectUser.objects.filter(user=request.tracer.user).all()
-    return {"my_projects": my_projects, "join_projects": join_projects}
+    current_enter_project = request.tracer.current_project
+    current_enter_project_name = None
+    if current_enter_project:
+        current_enter_project_name = current_enter_project.name
+    return {"my_projects": my_projects, "join_projects": join_projects,
+            "current_enter_project_name": current_enter_project_name}

@@ -87,3 +87,12 @@ class ProjectUser(models.Model):
     project = models.ForeignKey(verbose_name="项目", to=Project, on_delete=models.CASCADE)
     star = models.BooleanField(verbose_name="星标", default=False)
     create_time = models.DateTimeField(verbose_name="创建时间", auto_now_add=True)
+
+
+class Wiki(models.Model):
+    """wiki文章"""
+    title = models.CharField(verbose_name="标题", max_length=32)
+    content = models.TextField(verbose_name="内容")
+    project = models.ForeignKey(verbose_name="所属项目", to=Project, on_delete=models.CASCADE)
+    parent = models.ForeignKey(verbose_name="父级文章", to="self", on_delete=models.CASCADE, null=True, blank=True)
+    create_time = models.DateTimeField(verbose_name="创建时间", auto_now_add=True)
