@@ -4,8 +4,112 @@
     wiki
 {% endblock title %}
 
+{% block css %}
+    <style>
+        #index {
+            border-right: rgba(0, 0, 0, .2) 1px solid;
+        }
 
+        ul {
+            padding-left: 14px;
+        }
+
+        li {
+            list-style: none;
+        }
+
+        a:hover {
+            text-decoration: none;
+            color: cyan;
+        }
+    </style>
+{% endblock css %}
 
 {% block content %}
-    wiki page
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">WIKI</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-3" id="index">
+                    <ul id="tree">
+
+                    </ul>
+                </div>
+                <div class="col-md-9">
+
+                    <form>
+                        {% for field in form %}
+                            <div class="form-group">
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                <div class="error"></div>
+                            </div>
+                        {% endfor %}
+                    </form>
+                    <button class="btn btn-primary btn-lg" id="submitBtn">添加</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock content %}
+
+
+{% block js %}
+    <script>
+        $(function () {
+            createDirectoryTree()
+            submitForm()
+        })
+
+        function submitForm() {
+            $("#submitBtn").click(function () {
+                $.ajax({
+                    url: "{% url "web:wiki" project_id=project_id %}",
+                    type: "post",
+                    data: $("form").serialize(),
+                    dataType: "json",
+                    success: function (res) {
+                        console.log(res)
+                        if (res.status) {
+                            location.reload()
+                        } else {
+                            $.each(res.errors, function (k, v) {
+                                $("#id_" + k).next().text(v[0])
+                            })
+                        }
+                    },
+                    error: function (err) {
+                        console.log(err)
+                    }
+                })
+            })
+        }
+
+        function createDirectoryTree() {
+            $.ajax({
+                url: "{% url "web:tree" project_id=project_id %}",
+                type: "get",
+                dataType: "json",
+                success: function (res) {
+                    if (res.status) {
+                        $.each(res.datas, function (k, v) {
+                            let li = $("<li>" + v.title + "</li>").attr("id", "id_" + v.id)
+                            let a = $("<a></a>").attr("href", "/project/" + "{{ project_id }}" + "/wiki/" + v.id + "/edit/").append(li)
+                            if (v.parent == null) {
+                                $("#tree").append(a).append($("<ul></ul>"))
+                            } else {
+                                $("#id_" + v.parent).parent().next().append(a).append($("<ul></ul>"))
+                            }
+                        })
+                    } else {
+
+                    }
+                }
+            })
+
+        }
+    </script>
+{% endblock js %}

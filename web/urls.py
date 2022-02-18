@@ -36,7 +36,10 @@ urlpatterns = [
 
     path("project/<int:project_id>/", include([
         path("wiki/", views.WIKIView.as_view(), name="wiki"),
+        path("wiki/<int:wiki_id>/edit/", views.WIKIEditView.as_view(), name="wiki_edit"),
         path("file/", views.FileView.as_view(), name="file"),
         path("issuse/", views.IssuseView.as_view(), name="issuse"),
+
+        path("tree/", views.DirectoryTreeView.as_view(), name="tree"),
     ])),
 ]

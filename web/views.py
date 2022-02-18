@@ -3,13 +3,14 @@ import datetime
 from io import BytesIO
 
 from django.core.handlers.wsgi import WSGIRequest
+from django.forms import model_to_dict
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
 
-from web.forms import RegisterModelForm, SMSLoginForm, LoginForm, ProjectModelForm
-from web.models import Transaction, PricePolicy, Project, ProjectUser
+from web.forms import RegisterModelForm, SMSLoginForm, LoginForm, ProjectModelForm, WikiModelForm
+from web.models import Transaction, PricePolicy, Project, ProjectUser, Wiki
 from web.utils.func import send_sms, create_png, get_order
 
 
@@ -145,7 +146,17 @@ class ProjectListView(View):
 
 class WIKIView(View):
     def get(self, request: WSGIRequest, project_id: int):
-        return render(request, "wiki.html")
+        form = WikiModelForm(request)
+        return render(request, "wiki.html", {"form": form, "project_id": project_id, "wiki_id": 0})
+
+    def post(self, request: WSGIRequest, project_id: int):
+        form = WikiModelForm(request, data=request.POST)
+        if not form.is_valid():
+            return JsonResponse({"status": False, "errors": form.errors})
+
+        form.instance.project = request.tracer.current_project
+        form.save()
+        return JsonResponse({"status": True})
 
 
 class FileView(View):
@@ -192,3 +203,17 @@ class ProjectUnstarView(View):
             obj2.create_time = datetime.datetime.now()
             obj2.save()
         return JsonResponse({})
+
+
+class DirectoryTreeView(View):
+    def get(self, request: WSGIRequest, project_id: int):
+        wikis = Wiki.objects.filter(project_id=project_id).all()
+        datas = [model_to_dict(wiki) for wiki in wikis]
+        return JsonResponse({"status": True, "datas": datas})
+
+
+class WIKIEditView(View):
+    def get(self, request: WSGIRequest, project_id: int, wiki_id: int):
+        instance = Wiki.objects.filter(id=wiki_id).first()
+        form = WikiModelForm(request, instance=instance)
+        return render(request, "wiki.html", {"form": form, "project_id": project_id, "wiki_id": wiki_id})

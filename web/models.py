@@ -96,3 +96,6 @@ class Wiki(models.Model):
     project = models.ForeignKey(verbose_name="所属项目", to=Project, on_delete=models.CASCADE)
     parent = models.ForeignKey(verbose_name="父级文章", to="self", on_delete=models.CASCADE, null=True, blank=True)
     create_time = models.DateTimeField(verbose_name="创建时间", auto_now_add=True)
+
+    def __str__(self):
+        return self.title

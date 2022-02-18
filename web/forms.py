@@ -2,9 +2,10 @@ import re
 
 from django import forms
 from django.core.handlers.wsgi import WSGIRequest
+from django.db.models import QuerySet
 from django.forms import RadioSelect
 
-from web.models import UserInfo, Project
+from web.models import UserInfo, Project, Wiki
 from web.utils.func import encrypt
 
 
@@ -150,3 +151,17 @@ class ProjectModelForm(BootstrapStyle, forms.ModelForm):
             'color': ColorRadioSelect(attrs={'class': 'color-radio'}),
             "desc": forms.Textarea
         }
+
+
+class WikiModelForm(BootstrapStyle, forms.ModelForm):
+
+    def __init__(self, request: WSGIRequest, *args, **kwargs):
+        super().__init__(request, *args, **kwargs)
+        wikis: QuerySet = Wiki.objects.filter(project=request.tracer.current_project).all()
+        datas = [("", "-- 请选择 --")]
+        datas.extend(wikis.values_list("id", "title"))
+        self.fields["parent"].choices = datas
+
+    class Meta:
+        model = Wiki
+        fields = ["title", "content", "parent"]
