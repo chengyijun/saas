@@ -147,7 +147,7 @@ class ProjectListView(View):
 class WIKIView(View):
     def get(self, request: WSGIRequest, project_id: int):
         form = WikiModelForm(request)
-        return render(request, "wiki.html", {"form": form, "project_id": project_id, "wiki_id": 0})
+        return render(request, "wiki_add.html", {"form": form, "project_id": project_id})
 
     def post(self, request: WSGIRequest, project_id: int):
         form = WikiModelForm(request, data=request.POST)
@@ -157,6 +157,27 @@ class WIKIView(View):
         form.instance.project = request.tracer.current_project
         form.save()
         return JsonResponse({"status": True})
+
+
+class WIKIAddView(View):
+    def get(self, request: WSGIRequest, project_id: int):
+        form = WikiModelForm(request)
+        return render(request, "wiki_form.html", {"form": form, "project_id": project_id})
+
+
+class WIKIShowView(View):
+    def get(self, request: WSGIRequest, project_id: int, wiki_id: int):
+        form = WikiModelForm(request)
+        wiki = Wiki.objects.filter(id=wiki_id).first()
+        return render(request, "wiki_show.html",
+                      {"form": form, "project_id": project_id, "wiki": wiki, "wiki_id": wiki_id})
+
+
+class WIKIEditView(View):
+    def get(self, request: WSGIRequest, project_id: int, wiki_id: int):
+        instance = Wiki.objects.filter(id=wiki_id).first()
+        form = WikiModelForm(request, instance=instance)
+        return render(request, "wiki_form.html", {"form": form, "project_id": project_id, "wiki_id": wiki_id})
 
 
 class FileView(View):
@@ -210,10 +231,3 @@ class DirectoryTreeView(View):
         wikis = Wiki.objects.filter(project_id=project_id).all()
         datas = [model_to_dict(wiki) for wiki in wikis]
         return JsonResponse({"status": True, "datas": datas})
-
-
-class WIKIEditView(View):
-    def get(self, request: WSGIRequest, project_id: int, wiki_id: int):
-        instance = Wiki.objects.filter(id=wiki_id).first()
-        form = WikiModelForm(request, instance=instance)
-        return render(request, "wiki.html", {"form": form, "project_id": project_id, "wiki_id": wiki_id})

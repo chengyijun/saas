@@ -29,6 +29,7 @@
     <div class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">WIKI</h3>
+
         </div>
         <div class="panel-body">
             <div class="row">
@@ -60,7 +61,8 @@
 {% block js %}
     <script>
         $(function () {
-            createDirectoryTree()
+            let url = "{% url "web:tree" project_id=project_id %}"
+            createDirectoryTree(url)
             submitForm()
         })
 
@@ -88,28 +90,5 @@
             })
         }
 
-        function createDirectoryTree() {
-            $.ajax({
-                url: "{% url "web:tree" project_id=project_id %}",
-                type: "get",
-                dataType: "json",
-                success: function (res) {
-                    if (res.status) {
-                        $.each(res.datas, function (k, v) {
-                            let li = $("<li>" + v.title + "</li>").attr("id", "id_" + v.id)
-                            let a = $("<a></a>").attr("href", "/project/" + "{{ project_id }}" + "/wiki/" + v.id + "/edit/").append(li)
-                            if (v.parent == null) {
-                                $("#tree").append(a).append($("<ul></ul>"))
-                            } else {
-                                $("#id_" + v.parent).parent().next().append(a).append($("<ul></ul>"))
-                            }
-                        })
-                    } else {
-
-                    }
-                }
-            })
-
-        }
     </script>
 {% endblock js %}
