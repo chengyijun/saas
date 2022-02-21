@@ -1,5 +1,5 @@
 {% extends "layout/manage.html" %}
-
+{% load static %}
 {% block title %}
     wiki
 {% endblock title %}
@@ -23,6 +23,8 @@
             color: cyan;
         }
     </style>
+
+    <link rel="stylesheet" href="{% static 'plugin/editor-md/css/editormd.css' %}">
 {% endblock css %}
 
 {% block content %}
@@ -41,15 +43,31 @@
                 <div class="col-md-9">
 
                     <form>
+                        {% if wiki_id %}
+                            <input type="hidden" name="wiki_id" value="{{ wiki_id }}">
+                        {% endif %}
+
                         {% for field in form %}
-                            <div class="form-group">
-                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                {{ field }}
-                                <div class="error"></div>
-                            </div>
+
+                            {% if field.name == "content" %}
+                                <div id="md">
+                                    {{ field }}
+                                </div>
+                            {% else %}
+                                <div class="form-group">
+                                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                    <div class="error"></div>
+                                </div>
+                            {% endif %}
+
                         {% endfor %}
                     </form>
-                    <button class="btn btn-primary btn-lg" id="submitBtn">添加</button>
+                    {% if wiki_id %}
+                        <button class="btn btn-primary btn-lg" id="submitBtn">修改</button>
+                    {% else %}
+                        <button class="btn btn-primary btn-lg" id="submitBtn">添加</button>
+                    {% endif %}
 
                 </div>
             </div>
@@ -59,11 +77,33 @@
 
 
 {% block js %}
+    <script src="{% static 'plugin/editor-md/editormd.js' %}"></script>
     <script>
+
+
         $(function () {
+
+            // 渲染markdown编辑器
+            const editor = editormd("md", {
+                // width  : "100%",
+                height: "500px",
+                path: "{% static 'plugin/editor-md/lib/' %}",
+                imageUpload: true,
+                imageFormats: ["jpeg", "jpg", "png", "gif"],
+                imageUploadURL: "",
+            });
             let url = "{% url "web:tree" project_id=project_id %}"
             createDirectoryTree(url)
-            submitForm()
+
+            if ($("input[type=hidden]")[0] === undefined) {
+                console.log("添加")
+
+                submitForm()
+            } else {
+                console.log("修改")
+                editForm()
+            }
+
         })
 
         function submitForm() {
@@ -90,5 +130,28 @@
             })
         }
 
+        function editForm() {
+            $("#submitBtn").click(function () {
+                $.ajax({
+                    url: "{% url "web:wiki_edit" project_id=project_id wiki_id=wiki_id%}",
+                    type: "post",
+                    data: $("form").serialize(),
+                    dataType: "json",
+                    success: function (res) {
+                        console.log(res)
+                        if (res.status) {
+                            location.reload()
+                        } else {
+                            $.each(res.errors, function (k, v) {
+                                $("#id_" + k).next().text(v[0])
+                            })
+                        }
+                    },
+                    error: function (err) {
+                        console.log(err)
+                    }
+                })
+            })
+        }
     </script>
 {% endblock js %}

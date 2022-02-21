@@ -154,6 +154,7 @@ class ProjectModelForm(BootstrapStyle, forms.ModelForm):
 
 
 class WikiModelForm(BootstrapStyle, forms.ModelForm):
+    exclude_names = ["content"]
 
     def __init__(self, request: WSGIRequest, *args, **kwargs):
         super().__init__(request, *args, **kwargs)

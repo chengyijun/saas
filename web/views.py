@@ -162,7 +162,7 @@ class WIKIView(View):
 class WIKIAddView(View):
     def get(self, request: WSGIRequest, project_id: int):
         form = WikiModelForm(request)
-        return render(request, "wiki_form.html", {"form": form, "project_id": project_id})
+        return render(request, "wiki_form.html", {"form": form, "project_id": project_id, "wiki_id": 0})
 
 
 class WIKIShowView(View):
@@ -178,6 +178,14 @@ class WIKIEditView(View):
         instance = Wiki.objects.filter(id=wiki_id).first()
         form = WikiModelForm(request, instance=instance)
         return render(request, "wiki_form.html", {"form": form, "project_id": project_id, "wiki_id": wiki_id})
+
+    def post(self, request: WSGIRequest, project_id: int, wiki_id: int):
+        instance = Wiki.objects.filter(id=wiki_id).first()
+        form = WikiModelForm(request, instance=instance, data=request.POST)
+        if not form.is_valid():
+            return JsonResponse({"status": False, "errors": form.errors})
+        form.save()
+        return JsonResponse({"status": True})
 
 
 class FileView(View):
