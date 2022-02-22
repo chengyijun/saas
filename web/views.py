@@ -1,10 +1,12 @@
 # Create your views here.
 import datetime
 from io import BytesIO
+from wsgiref.util import FileWrapper
 
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.handlers.wsgi import WSGIRequest
 from django.forms import model_to_dict
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, FileResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
@@ -239,3 +241,27 @@ class DirectoryTreeView(View):
         wikis = Wiki.objects.filter(project_id=project_id).all()
         datas = [model_to_dict(wiki) for wiki in wikis]
         return JsonResponse({"status": True, "datas": datas})
+
+
+class MduploadView(View):
+    def post(self, request: WSGIRequest, project_id: int):
+        file: InMemoryUploadedFile = request.FILES.get("editormd-image-file")
+        with open(f"uploads/{file.name}", "wb") as f:
+            for chuck in file.chunks():
+                f.write(chuck)
+
+        # markdown-editor 消息通知的固定格式
+        res = {
+            "success": 1,
+            "message": "success!",
+            "url": f"http://127.0.0.1:8000/project/1/wiki/mddownload/{file.name}/"
+        }
+        response = JsonResponse(res)
+        # 设置此消息头 放行frame的跨域问题 markdown-editor要求的
+        response['X-Frame-Options'] = "ALLOWALL"
+        return response
+
+
+class MddownloadView(View):
+    def get(self, request: WSGIRequest, project_id: int, filename: str):
+        return FileResponse(FileWrapper(open(f"uploads/{filename}", "rb")))

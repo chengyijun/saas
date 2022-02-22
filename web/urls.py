@@ -43,5 +43,7 @@ urlpatterns = [
         path("issuse/", views.IssuseView.as_view(), name="issuse"),
 
         path("tree/", views.DirectoryTreeView.as_view(), name="tree"),
+        path("wiki/mdupload/", views.MduploadView.as_view(), name="mdupload"),
+        path("wiki/mddownload/<str:filename>/", views.MddownloadView.as_view(), name="mddownload"),
     ])),
 ]

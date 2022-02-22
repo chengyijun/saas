@@ -1,3 +1,4 @@
+from django.contrib import admin
 from django.db import models
 from django.db.models import Manager
 
@@ -99,3 +100,7 @@ class Wiki(models.Model):
 
     def __str__(self):
         return self.title
+
+
+# 注册模型类 让django自带的后台可以进行管理
+admin.site.register([UserInfo, PricePolicy, Transaction, Project, ProjectUser, Wiki])

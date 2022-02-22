@@ -90,7 +90,7 @@
                 path: "{% static 'plugin/editor-md/lib/' %}",
                 imageUpload: true,
                 imageFormats: ["jpeg", "jpg", "png", "gif"],
-                imageUploadURL: "",
+                imageUploadURL: "{% url 'web:mdupload' project_id=project_id%}",
             });
             let url = "{% url "web:tree" project_id=project_id %}"
             createDirectoryTree(url)
