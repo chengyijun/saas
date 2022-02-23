@@ -1,6 +1,7 @@
 # Create your views here.
 import datetime
 from io import BytesIO
+from pathlib import Path
 from wsgiref.util import FileWrapper
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -246,7 +247,12 @@ class DirectoryTreeView(View):
 class MduploadView(View):
     def post(self, request: WSGIRequest, project_id: int):
         file: InMemoryUploadedFile = request.FILES.get("editormd-image-file")
-        with open(f"uploads/{file.name}", "wb") as f:
+
+        uploads = Path("uploads")
+        if not uploads.exists():
+            uploads.mkdir(777)
+        target_file = uploads.resolve().joinpath(file.name)
+        with open(target_file, "wb") as f:
             for chuck in file.chunks():
                 f.write(chuck)
 
@@ -264,4 +270,5 @@ class MduploadView(View):
 
 class MddownloadView(View):
     def get(self, request: WSGIRequest, project_id: int, filename: str):
-        return FileResponse(FileWrapper(open(f"uploads/{filename}", "rb")))
+        target_file = Path("uploads").resolve().joinpath(filename)
+        return FileResponse(FileWrapper(open(target_file, "rb")))

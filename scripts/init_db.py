@@ -1,14 +1,14 @@
 import os
 import sys
+from pathlib import Path
 
 import django
 
 # ------------------------------ 环境 -------------------------------------
-
 # 将项目目录task_platform加入到环境变量
 
+base_dir = Path(__file__).resolve().parent.parent
 
-base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(base_dir)
 print("scipt init")
 # 加载配置文件，并启动一个虚拟的django服务
