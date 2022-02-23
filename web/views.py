@@ -43,11 +43,13 @@ class RegisterView(View):
             return JsonResponse({"status": False, "msg": "fail add", "errors": form.errors})
         instance = form.save()
         # 给注册用户 设置一个免费版的交易记录
+        price_policy = PricePolicy.objects.filter(category=1).order_by("id").first()
+
         Transaction.objects.create(
             status=2,
             order=get_order(),
             user=instance,
-            price_policy=PricePolicy.objects.filter(pk=1).first(),
+            price_policy=price_policy,
             count=0,
             price=0,
             start_datetime=datetime.datetime.now()

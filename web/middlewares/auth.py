@@ -44,10 +44,10 @@ class AuthMiddleware(MiddlewareMixin):
                 # 付费版
                 if transaction_obj.end_datetime and transaction_obj.end_datetime < datetime.datetime.now():
                     # 已过期
-                    policy_obj = PricePolicy.objects.filter(pk=1).first()
+                    policy_obj = PricePolicy.objects.filter(category=1).order_by("id").first()
             else:
                 # 免费版
-                policy_obj = PricePolicy.objects.filter(pk=1).first()
+                policy_obj = PricePolicy.objects.filter(category=1).order_by("id").first()
         tracer.policy = policy_obj
         # if policy_obj:
         #     print("*********", policy_obj.project_num)

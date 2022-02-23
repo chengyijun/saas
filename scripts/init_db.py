@@ -5,10 +5,9 @@ from pathlib import Path
 import django
 
 # ------------------------------ 环境 -------------------------------------
-# 将项目目录task_platform加入到环境变量
+
 
 base_dir = Path(__file__).resolve().parent.parent
-
 sys.path.append(base_dir)
 print("scipt init")
 # 加载配置文件，并启动一个虚拟的django服务
@@ -19,14 +18,6 @@ django.setup()
 
 from web.models import PricePolicy
 
-# UserInfo.objects.create(
-#     username="abel",
-#     password="123",
-#     email="cyjmmy@qq.com",
-#     phone="13178458956"
-# )
-
-# obj = UserInfo.objects.filter(pk=1).update(username="jock")
 PricePolicy.objects.create(
     category=1,
     title="个人免费版",
@@ -35,5 +26,5 @@ PricePolicy.objects.create(
     project_member=5,
     project_space=10,
     project_file_size=2,
-
 )
+print("价格策略初始化完毕")
