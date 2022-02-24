@@ -4,8 +4,134 @@
     file
 {% endblock title %}
 
+{% block css %}
+    <style>
+        .panel-heading {
+            display: flex;
+            justify-content: space-between;
+        }
 
+        #file-input {
+            display: none;
+        }
+
+        #progressBox {
+            position: fixed;
+            bottom: 0;
+            right: 20px;
+            width: 25%;
+
+        }
+
+        #template {
+            display: none;
+        }
+    </style>
+{% endblock css %}
 
 {% block content %}
-    file page
+    <div class="container-fluid">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-folder-o" aria-hidden="true"></i> 文件库</h3>
+                <div>
+                    <a id="upfile" href="#" class="btn btn-primary btn-xs"><i class="fa fa-upload"
+                                                                              aria-hidden="true"></i> 上传文件</a>
+                    <a href="#" class="btn btn-info btn-xs"><i class="fa fa-plus-circle" aria-hidden="true"></i>
+                        新建文件夹</a>
+                </div>
+            </div>
+            <div class="panel-body">
+
+                <input type="file" name="file" id="file-input" multiple>
+
+                <table class="table table-striped">
+                    <tr>
+                        <td>名称</td>
+                        <td>文件大小</td>
+                        <td>更新者</td>
+                        <td>更新时间</td>
+                        <td>操作</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div id="progressBox" class="panel panel-default">
+            <div class="panel-heading">上传进度</div>
+            <div class="panel-body" id="targetBox">
+
+
+            </div>
+        </div>
+    </div>
+
+    <div id="template">
+        <div class="progress">
+            <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0"
+                 aria-valuemax="100"
+                 style="width: 0%;">
+                0%
+            </div>
+        </div>
+    </div>
+
 {% endblock content %}
+
+
+{% block js %}
+    <script>
+        $(function () {
+            uploadFile()
+        })
+
+        function uploadFile() {
+            $("#upfile").click(function () {
+                $("#file-input").click()
+            })
+
+
+        }
+
+        $("#file-input").change(function (e) {
+            $.each(e.target.files, function (k, v) {
+
+                // 创建进度条
+
+                $("#targetBox").append($($("#template").children()[0]).clone().attr("id", "id_" + k))
+                const formData = new FormData()
+                formData.append("file", v);
+                console.log(formData)
+                $.ajax({
+                    type: "post",
+                    url: "{% url "web:file" project_id=project_id %}",
+                    async: true,
+                    data: formData,
+                    dataType: "json",
+                    cache: false,
+                    processData: false,
+                    contentType: false,
+                    xhr: function () {
+                        // 获取原生的xhr对象 并返回 相当于overwrite xhr()方法
+                        const xhr = $.ajaxSettings.xhr();
+                        if (xhr.upload) {
+                            //添加 progress 事件监听
+                            xhr.upload.addEventListener('progress', function (e) {
+
+                                let percentage = parseInt((e.loaded / e.total * 100).toString())
+                                console.log(k, percentage)
+                                $($("#id_" + k).children()[0]).css("width", percentage + "%")
+                                $($("#id_" + k).children()[0]).html(percentage + "%")
+                            }, false);
+                        }
+                        return xhr;
+                    },
+                    complete: function (res) {
+                        console.log(res)
+                    }
+                });
+            })
+
+        })
+    </script>
+{% endblock js %}

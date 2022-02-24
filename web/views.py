@@ -195,7 +195,17 @@ class WIKIEditView(View):
 
 class FileView(View):
     def get(self, request: WSGIRequest, project_id: int):
-        return render(request, "file.html")
+        return render(request, "file.html", {"project_id": project_id})
+
+    def post(self, request: WSGIRequest, project_id: int):
+        # print("file upload", request.FILES)
+        file: InMemoryUploadedFile = request.FILES.get("file")
+        uploads = Path("uploads")
+        target_file = uploads.resolve().joinpath(file.name)
+        with open(target_file, "wb") as f:
+            for chuck in file.chunks():
+                f.write(chuck)
+        return JsonResponse({"status": True})
 
 
 class IssuseView(View):
@@ -249,10 +259,7 @@ class DirectoryTreeView(View):
 class MduploadView(View):
     def post(self, request: WSGIRequest, project_id: int):
         file: InMemoryUploadedFile = request.FILES.get("editormd-image-file")
-
         uploads = Path("uploads")
-        if not uploads.exists():
-            uploads.mkdir(777)
         target_file = uploads.resolve().joinpath(file.name)
         with open(target_file, "wb") as f:
             for chuck in file.chunks():
