@@ -2,6 +2,7 @@
 import datetime
 from io import BytesIO
 from pathlib import Path
+from pprint import pprint
 from wsgiref.util import FileWrapper
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -250,6 +251,7 @@ class FileDirAddView(View):
         post_dict = request.POST.dict()
 
         parent_id = int(post_dict.get("parent_id")) if post_dict.get("parent_id") != '0' else None
+
         data = {
             "file_type": 2,
             "name": post_dict.get("name"),
@@ -259,7 +261,7 @@ class FileDirAddView(View):
             "project": request.tracer.current_project,
             "update_user": request.tracer.user
         }
-
+        pprint(data)
         # 将文件信息写入数据库
         FileRepository.objects.create(**data)
         return JsonResponse({"status": True})

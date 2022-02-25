@@ -41,7 +41,10 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav">
                 {% project_select request %}
-                {% manage_nav request %}
+                {% if request.tracer.current_project %}
+
+                    {% manage_nav request %}
+                {% endif %}
 
             </ul>
 

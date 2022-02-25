@@ -64,6 +64,6 @@ class AuthMiddleware(MiddlewareMixin):
                 request.tracer.current_project = my_project
             elif join_project:
                 request.tracer.current_project = join_project.project
-            else:
-                return redirect(reverse("web:project_list"))
+            # else:
+            # return redirect(reverse("web:project_list"))
         # print("当前进入项目", request.tracer.current_project)
