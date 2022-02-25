@@ -7,19 +7,20 @@ from wsgiref.util import FileWrapper
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.handlers.wsgi import WSGIRequest
 from django.forms import model_to_dict
-from django.http import JsonResponse, HttpResponse, FileResponse
+from django.http import JsonResponse, HttpResponse, FileResponse, Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.utils.encoding import escape_uri_path
 from django.views import View
 
-from web.forms import RegisterModelForm, SMSLoginForm, LoginForm, ProjectModelForm, WikiModelForm
-from web.models import Transaction, PricePolicy, Project, ProjectUser, Wiki
+from web.forms import RegisterModelForm, SMSLoginForm, LoginForm, ProjectModelForm, WikiModelForm, \
+    FileRepositoryModelForm
+from web.models import Transaction, PricePolicy, Project, ProjectUser, Wiki, FileRepository
 from web.utils.func import send_sms, create_png, get_order
 
 
 class SendSMSView(View):
     def get(self, request: WSGIRequest):
-        # print("sms get")
         phone = request.GET.dict().get("phone")
         # code = random.randint(1000, 9999)
         code = "1111"
@@ -34,12 +35,9 @@ class RegisterView(View):
         return render(request, "register.html", {"form": form})
 
     def post(self, request: WSGIRequest):
-        # print("register post method")
-        # print(request.POST.dict())
         form = RegisterModelForm(request, data=request.POST)
         is_valid = form.is_valid()
         if not is_valid:
-            # print(form.errors)
             return JsonResponse({"status": False, "msg": "fail add", "errors": form.errors})
         instance = form.save()
         # 给注册用户 设置一个免费版的交易记录
@@ -66,7 +64,6 @@ class SMSLoginView(View):
         form = SMSLoginForm(request, data=request.POST)
         is_valid = form.is_valid()
         if not is_valid:
-            # print(form.errors)
             return JsonResponse({"status": False, "msg": "fail add", "errors": form.errors})
         return JsonResponse({"status": True, "msg": "success login", "data": reverse("web:index")})
 
@@ -106,7 +103,6 @@ class LoginView(View):
         form = LoginForm(request, data=request.POST)
         is_valid = form.is_valid()
         if not is_valid:
-            # print(form.errors)
             return JsonResponse({"status": False, "msg": "fail add", "errors": form.errors})
         return JsonResponse({"status": True, "msg": "success login", "data": reverse("web:index")})
 
@@ -194,18 +190,111 @@ class WIKIEditView(View):
 
 
 class FileView(View):
-    def get(self, request: WSGIRequest, project_id: int):
-        return render(request, "file.html", {"project_id": project_id})
+    def get(self, request: WSGIRequest, project_id: int, parent_id: int):
+        # 查询出所有文、文件夹
+        if parent_id == 0:
+            files = FileRepository.objects.filter(project=request.tracer.current_project, parent_id__isnull=True).all()
+        else:
+            files = FileRepository.objects.filter(project=request.tracer.current_project, parent_id=parent_id).all()
+        # 构造面包屑导航
+        breads = []
+        if parent_id != 0:
+            file: FileRepository = FileRepository.objects.filter(id=parent_id).first()
+            breads.insert(0, {"id": parent_id, "name": file.name})
+            current = file
+            while current.parent:
+                breads.insert(0, {"id": current.parent.id, "name": current.parent.name})
+                current = current.parent
+            else:
+                breads.insert(0, {"id": 0, "name": "/"})
+        else:
+            breads.insert(0, {"id": 0, "name": "/"})
 
-    def post(self, request: WSGIRequest, project_id: int):
-        # print("file upload", request.FILES)
+        form = FileRepositoryModelForm(request)
+
+        return render(request, "file.html", {
+            "project_id": project_id,
+            "parent_id": parent_id,
+            "files": files,
+            "breads": breads,
+            "form": form
+        })
+
+    def post(self, request: WSGIRequest, project_id: int, parent_id: int):
+
         file: InMemoryUploadedFile = request.FILES.get("file")
         uploads = Path("uploads")
         target_file = uploads.resolve().joinpath(file.name)
         with open(target_file, "wb") as f:
             for chuck in file.chunks():
                 f.write(chuck)
+        if parent_id == 0:
+            parent_id = None
+        data = {
+            "file_type": 1,
+            "name": file.name,
+            "file_size": target_file.stat().st_size,
+            "file_path": f"/{file.name}/",
+            "parent_id": parent_id,
+            "project": request.tracer.current_project,
+            "update_user": request.tracer.user
+        }
+
+        # 将文件信息写入数据库
+        FileRepository.objects.create(**data)
         return JsonResponse({"status": True})
+
+
+class FileDirAddView(View):
+    def post(self, request: WSGIRequest, project_id: int):
+        post_dict = request.POST.dict()
+
+        parent_id = int(post_dict.get("parent_id")) if post_dict.get("parent_id") != '0' else None
+        data = {
+            "file_type": 2,
+            "name": post_dict.get("name"),
+            "file_size": 0,
+            "file_path": f"/{post_dict.get('name')}/",
+            "parent_id": parent_id,
+            "project": request.tracer.current_project,
+            "update_user": request.tracer.user
+        }
+
+        # 将文件信息写入数据库
+        FileRepository.objects.create(**data)
+        return JsonResponse({"status": True})
+
+
+class FileDeleteView(View):
+    def get(self, request: WSGIRequest, project_id: int, file_id: int):
+        file: FileRepository = FileRepository.objects.filter(id=file_id).first()
+        if file:
+            parent_id = file.parent.id if file.parent else 0
+            # 删除文件
+            if file.file_type == 1:
+                Path(f"uploads/{file.name}").unlink()
+            # 删除文件 数据库记录
+            file.delete()
+            return redirect(reverse("web:file", kwargs={
+                "project_id": project_id,
+                "parent_id": parent_id
+            }))
+
+
+class FileDownloadView(View):
+    def get(self, request: WSGIRequest, project_id: int, file_id: int):
+        file: FileRepository = FileRepository.objects.filter(id=file_id).first()
+        if file:
+            file_path = Path(f"uploads/{file.name}")
+            try:
+                response = FileResponse(open(file_path, 'rb'))
+                response['content_type'] = "application/octet-stream"
+                # 告诉浏览器 文件的的大小 这很重要
+                response['Content-Length'] = file_path.stat().st_size
+                response['Content-Disposition'] = 'attachment; filename=' + escape_uri_path(file.name)
+                return response
+            except Exception:
+                raise Http404
 
 
 class IssuseView(View):
@@ -224,7 +313,6 @@ class ProjectStarView(View):
         obj2: ProjectUser = ProjectUser.objects.filter(user=request.tracer.user, project_id=project_id,
                                                        star=False).first()
         if obj2:
-            # print(obj2.project.id)
             obj2.star = True
             obj2.create_time = datetime.datetime.now()
             obj2.save()
@@ -242,7 +330,6 @@ class ProjectUnstarView(View):
         obj2: ProjectUser = ProjectUser.objects.filter(user=request.tracer.user, project_id=project_id,
                                                        star=True).first()
         if obj2:
-            # print(obj2.project.id)
             obj2.star = False
             obj2.create_time = datetime.datetime.now()
             obj2.save()

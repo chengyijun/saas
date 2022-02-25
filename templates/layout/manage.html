@@ -42,7 +42,7 @@
             <ul class="nav navbar-nav">
                 {% project_select request %}
                 <li><a href="{% url "web:wiki" "1" %}">wiki</a></li>
-                <li><a href="{% url "web:file" project_id="1" %}">文件</a></li>
+                <li><a href="{% url "web:file" project_id="1" parent_id=0 %}">文件</a></li>
                 <li><a href="{% url "web:issuse" project_id="1" %}">问题</a></li>
 
             </ul>

@@ -11,6 +11,11 @@
             justify-content: space-between;
         }
 
+        .panel-heading > div:nth-child(1) {
+            display: flex;
+            justify-content: space-between;
+        }
+
         #file-input {
             display: none;
         }
@@ -26,6 +31,14 @@
         #template {
             display: none;
         }
+
+        #progressBox {
+            display: none;
+        }
+
+        .panel-title ol {
+            display: inline;
+        }
     </style>
 {% endblock css %}
 
@@ -33,12 +46,54 @@
     <div class="container-fluid">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title"><i class="fa fa-folder-o" aria-hidden="true"></i> 文件库</h3>
+                <div>
+
+                    <div class="panel-title">
+                        <i class="fa fa-folder-o" aria-hidden="true"></i> 文件库
+                        <ol class="breadcrumb">
+                            {% for bread in breads %}
+                                <li>
+                                    <a href="{% url 'web:file' project_id=project_id parent_id=bread.id %}">{{ bread.name }}</a>
+                                </li>
+                            {% endfor %}
+                        </ol>
+                    </div>
+
+                </div>
+
                 <div>
                     <a id="upfile" href="#" class="btn btn-primary btn-xs"><i class="fa fa-upload"
                                                                               aria-hidden="true"></i> 上传文件</a>
-                    <a href="#" class="btn btn-info btn-xs"><i class="fa fa-plus-circle" aria-hidden="true"></i>
+                    <a data-toggle="modal" data-target="#myModal" id="cdir" href="#" class="btn btn-info btn-xs"><i
+                            class="fa fa-plus-circle"
+                            aria-hidden="true"></i>
                         新建文件夹</a>
+
+                    <!-- Modal -->
+                    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                            aria-hidden="true">&times;</span></button>
+                                    <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+                                </div>
+                                <div class="modal-body">
+                                    {% for field in form %}
+                                        <div class="form-group">
+                                            <label for="exampleInputEmail1">{{ field.label }}</label>
+                                            {{ field }}
+                                            <div class="error"></div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                    <button id="btn_dir" type="button" class="btn btn-primary">新增</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="panel-body">
@@ -53,6 +108,37 @@
                         <td>更新时间</td>
                         <td>操作</td>
                     </tr>
+                    {% for file in files %}
+                        <tr>
+                            <td>
+                                {% if file.file_type == 2 %}
+                                    <i class="fa fa-folder" aria-hidden="true"></i>
+                                    <a href="{% url "web:file" project_id=project_id parent_id=file.id %}">
+                                        {{ file.name }}
+                                    </a>
+                                {% else %}
+                                    {{ file.name }}</td>
+                                {% endif %}
+                            <td>
+                                {% if file.file_size == 0 %}
+                                    -
+                                {% else %}
+                                    {{ file.file_size }}</td>
+                                {% endif %}
+                            <td>{{ file.update_user.username }}</td>
+                            <td>{{ file.update_datetime }}</td>
+                            <td>
+                                {% if file.file_type == 1 %}
+                                    <a href="{% url 'web:file_download' project_id file.id %}">
+                                        <i class="fa fa-cloud-download" aria-hidden="true"></i>
+                                    </a>
+                                {% endif %}
+                                <a href="{% url 'web:file_delete' project_id file.id %}">
+                                    <i class="fa fa-trash" aria-hidden="true"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
                 </table>
             </div>
         </div>
@@ -83,7 +169,27 @@
     <script>
         $(function () {
             uploadFile()
+            createDir()
         })
+
+
+        function createDir() {
+            $("#btn_dir").click(function () {
+                $.ajax({
+                    url: "{% url "web:dir_add" project_id=project_id %}",
+                    type: "post",
+                    data: {
+                        parent_id: {{ parent_id }},
+                        name: $("#id_name").val()
+                    },
+                    dataType: "json",
+                    success: function (res) {
+                        console.log(res)
+                        location.reload()
+                    }
+                })
+            })
+        }
 
         function uploadFile() {
             $("#upfile").click(function () {
@@ -94,17 +200,20 @@
         }
 
         $("#file-input").change(function (e) {
+            // 清空进度条
+            $("#targetBox").empty()
+            // 显示进度条面板
+            $("#progressBox").show()
             $.each(e.target.files, function (k, v) {
-
                 // 创建进度条
-
                 $("#targetBox").append($($("#template").children()[0]).clone().attr("id", "id_" + k))
+                // 上传每一个文件
                 const formData = new FormData()
                 formData.append("file", v);
-                console.log(formData)
+                //console.log(formData)
                 $.ajax({
                     type: "post",
-                    url: "{% url "web:file" project_id=project_id %}",
+                    url: "{% url "web:file" project_id=project_id parent_id=parent_id %}",
                     async: true,
                     data: formData,
                     dataType: "json",
@@ -127,11 +236,37 @@
                         return xhr;
                     },
                     complete: function (res) {
-                        console.log(res)
+                        //console.log(res)
                     }
                 });
             })
 
+            // 启动定时器 判断是否所有文件都上传完毕 如果都上传完毕就关闭 刷新页面 显示新上传的文件
+            let timer = setInterval(function () {
+                let flags = []
+                $.each($("div[id^='id_']"), function (k, v) {
+                    console.log(k, $($(v).children()[0]).html())
+                    if ($($(v).children()[0]).html() === '100%') {
+                        flags.push(true)
+                    } else {
+                        flags.push(false)
+                    }
+                })
+                console.log(flags)
+                if (isFinished(flags)) {
+                    clearInterval(timer)
+                    location.reload()
+                }
+            }, 1000)
         })
+
+        function isFinished(results) {
+            $.each(results, function (k, v) {
+                if (!v) {
+                    return false
+                }
+            })
+            return true
+        }
     </script>
 {% endblock js %}

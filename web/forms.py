@@ -5,7 +5,7 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.db.models import QuerySet
 from django.forms import RadioSelect
 
-from web.models import UserInfo, Project, Wiki
+from web.models import UserInfo, Project, Wiki, FileRepository
 from web.utils.func import encrypt
 
 
@@ -166,3 +166,9 @@ class WikiModelForm(BootstrapStyle, forms.ModelForm):
     class Meta:
         model = Wiki
         fields = ["title", "content", "parent"]
+
+
+class FileRepositoryModelForm(BootstrapStyle, forms.ModelForm):
+    class Meta:
+        model = FileRepository
+        fields = ["name"]

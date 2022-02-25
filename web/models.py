@@ -111,11 +111,12 @@ class FileRepository(models.Model):
     )
     file_type = models.SmallIntegerField(verbose_name="类型", choices=file_type_chioces)
     name = models.CharField(verbose_name="文件名", max_length=32, help_text="文件/文件夹")
-    file_size = models.IntegerField(verbose_name="文件大小", null=True, blank=True)
-    file_path = models.IntegerField(verbose_name="文件路径", null=True, blank=True)
-    parent = models.ForeignKey(verbose_name="父级", to="self", related_name="child", on_delete=models.CASCADE)
-    update_user = models.ForeignKey(verbose_name="更新者", to=UserInfo, on_delete=models.CASCADE)
-    update_datetime = models.DateTimeField(verbose_name="更新时间", auto_now=True)
+    file_size = models.IntegerField(verbose_name="文件大小", default=0)
+    file_path = models.CharField(verbose_name="文件路径", max_length=64, null=True, blank=True)
+    parent = models.ForeignKey(verbose_name="父级", to="self", related_name="child", on_delete=models.CASCADE, null=True,
+                               blank=True)
+    update_user = models.ForeignKey(verbose_name="更新者", to=UserInfo, on_delete=models.DO_NOTHING)
+    update_datetime = models.DateTimeField(verbose_name="更新时间", auto_now_add=True)
 
 
 # 注册模型类 让django自带的后台可以进行管理

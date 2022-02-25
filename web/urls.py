@@ -39,7 +39,11 @@ urlpatterns = [
         path("wiki/add/", views.WIKIAddView.as_view(), name="wiki_add"),
         path("wiki/<int:wiki_id>/edit/", views.WIKIEditView.as_view(), name="wiki_edit"),
         path("wiki/<int:wiki_id>/show/", views.WIKIShowView.as_view(), name="wiki_show"),
-        path("file/", views.FileView.as_view(), name="file"),
+        path("file/<int:parent_id>/", views.FileView.as_view(), name="file"),
+        path("file/diradd/", views.FileDirAddView.as_view(), name="dir_add"),
+        path("file/<int:file_id>/delete", views.FileDeleteView.as_view(), name="file_delete"),
+        path("file/<int:file_id>/download", views.FileDownloadView.as_view(), name="file_download"),
+
         path("issuse/", views.IssuseView.as_view(), name="issuse"),
 
         path("tree/", views.DirectoryTreeView.as_view(), name="tree"),
