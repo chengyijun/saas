@@ -17,7 +17,6 @@ class Tracer:
 
 
 class AuthMiddleware(MiddlewareMixin):
-
     def process_request(self, request: WSGIRequest):
         # print("全局认证中间件")
         # /index/
@@ -34,7 +33,8 @@ class AuthMiddleware(MiddlewareMixin):
         request.tracer = tracer
 
         # 获取登录用户的价格策略 并绑定到 request.tracer对象上
-        transaction_obj: Transaction = Transaction.objects.filter(user=request.tracer.user).order_by("-id").first()
+        transaction_obj: Transaction = Transaction.objects.filter(
+            user=request.tracer.user).order_by("-id").first()
         # 判断最后一笔交易记录 是否是付费版
         policy_obj = None
         if transaction_obj:
@@ -42,28 +42,32 @@ class AuthMiddleware(MiddlewareMixin):
 
             if policy_obj.category == 2:
                 # 付费版
-                if transaction_obj.end_datetime and transaction_obj.end_datetime < datetime.datetime.now():
+                if transaction_obj.end_datetime and transaction_obj.end_datetime < datetime.datetime.now(
+                ):
                     # 已过期
-                    policy_obj = PricePolicy.objects.filter(category=1).order_by("id").first()
+                    policy_obj = PricePolicy.objects.filter(
+                        category=1).order_by("id").first()
             else:
                 # 免费版
-                policy_obj = PricePolicy.objects.filter(category=1).order_by("id").first()
+                policy_obj = PricePolicy.objects.filter(
+                    category=1).order_by("id").first()
         tracer.policy = policy_obj
         # if policy_obj:
         #     print("*********", policy_obj.project_num)
 
-    def process_view(self, request: WSGIRequest, view_func, view_args, view_kwargs):
+    def process_view(self, request: WSGIRequest, view_func, view_args,
+                     view_kwargs):
 
         project_id = view_kwargs.get("project_id")
         if request.path_info.startswith("/project/") and project_id:
-            my_project: Project = Project.objects.filter(id=project_id, creator=request.tracer.user).first()
-            join_project: ProjectUser = ProjectUser.objects.filter(project_id=project_id,
-                                                                   user=request.tracer.user).first()
+            my_project: Project = Project.objects.filter(
+                id=project_id, creator=request.tracer.user).first()
+            join_project: ProjectUser = ProjectUser.objects.filter(
+                project_id=project_id, user=request.tracer.user).first()
 
             if my_project:
                 request.tracer.current_project = my_project
             elif join_project:
                 request.tracer.current_project = join_project.project
-            # else:
-            # return redirect(reverse("web:project_list"))
-        # print("当前进入项目", request.tracer.current_project)
+            else:
+                request.tracer.current_project = None

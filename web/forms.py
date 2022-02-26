@@ -20,13 +20,17 @@ class BootstrapStyle:
             if field in self.exclude_names:
                 continue
             self.fields[field].widget.attrs.update({
-                'class': 'form-control',
-                'placeholder': f"请输入{self.fields[field].label}"
+                'class':
+                'form-control',
+                'placeholder':
+                f"请输入{self.fields[field].label}"
             })
 
 
 class RegisterModelForm(BootstrapStyle, forms.ModelForm):
-    ensure_password = forms.CharField(label="确认密码", max_length=64, widget=forms.PasswordInput)
+    ensure_password = forms.CharField(label="确认密码",
+                                      max_length=64,
+                                      widget=forms.PasswordInput)
     code = forms.CharField(label="验证码", max_length=4)
 
     def clean_username(self):
@@ -68,7 +72,9 @@ class RegisterModelForm(BootstrapStyle, forms.ModelForm):
     class Meta:
         model = UserInfo
         # fields = "__all__"
-        fields = ["username", "password", "ensure_password", "email", "phone", "code"]
+        fields = [
+            "username", "password", "ensure_password", "email", "phone", "code"
+        ]
         widgets = {
             "password": forms.PasswordInput,
         }
@@ -101,7 +107,9 @@ class SMSLoginForm(BootstrapStyle, forms.Form):
 
 class LoginForm(BootstrapStyle, forms.Form):
     username = forms.CharField(label="用户名", max_length=20)
-    password = forms.CharField(label="密码", max_length=20, widget=forms.PasswordInput())
+    password = forms.CharField(label="密码",
+                               max_length=20,
+                               widget=forms.PasswordInput())
     code = forms.CharField(label="验证码", max_length=4)
 
     def clean_username(self):
@@ -114,7 +122,8 @@ class LoginForm(BootstrapStyle, forms.Form):
         username = self.cleaned_data.get("username")
         password = self.cleaned_data.get("password")
         encrypt_password = encrypt(password)
-        user = UserInfo.objects.filter(username=username, password=encrypt_password).first()
+        user = UserInfo.objects.filter(username=username,
+                                       password=encrypt_password).first()
         if not user:
             self.add_error("password", "密码错误")
         # 将登录用户 写入session
@@ -124,7 +133,7 @@ class LoginForm(BootstrapStyle, forms.Form):
     def clean_code(self):
         code = self.cleaned_data.get("code")
         session_code_str = self.request.session.get("pcode")
-        # print(code, session_code_str)
+        print(code, session_code_str)
         if code != session_code_str:
             self.add_error("code", "验证码不正确")
             return code
@@ -140,7 +149,8 @@ class ProjectModelForm(BootstrapStyle, forms.ModelForm):
 
     def clean_name(self):
         name = self.cleaned_data.get("name")
-        if Project.objects.filter(name=name, creator=self.request.tracer.user).exists():
+        if Project.objects.filter(name=name,
+                                  creator=self.request.tracer.user).exists():
             self.add_error("name", "项目已存在")
         return name
 
@@ -158,7 +168,8 @@ class WikiModelForm(BootstrapStyle, forms.ModelForm):
 
     def __init__(self, request: WSGIRequest, *args, **kwargs):
         super().__init__(request, *args, **kwargs)
-        wikis: QuerySet = Wiki.objects.filter(project=request.tracer.current_project).all()
+        wikis: QuerySet = Wiki.objects.filter(
+            project=request.tracer.current_project).all()
         datas = [("", "-- 请选择 --")]
         datas.extend(wikis.values_list("id", "title"))
         self.fields["parent"].choices = datas
