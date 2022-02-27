@@ -101,7 +101,6 @@ class CodeView(View):
         # 字典 新增键值对 有update()和setdefault()两种方法
         # 但尤其要注意的是 当setdefault()要添加的键值对在字典中已经存在的情况下 就不更新了
         request.session.update({"pcode": code})
-        print(code)
         f = BytesIO()
         img.save(f, "png")
         return HttpResponse(f.getvalue())
@@ -330,7 +329,8 @@ class FileDeleteView(View):
             parent_id = file.parent.id if file.parent else 0
             # 删除文件
             if file.file_type == 1:
-                Path(f"uploads/{file.name}").unlink()
+                # missing_ok=True 表示如果删除的文件不存在 则什么也不做 不报错
+                Path(f"uploads/{file.name}").unlink(missing_ok=True)
             # 删除文件 数据库记录
             file.delete()
             return redirect(

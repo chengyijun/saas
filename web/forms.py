@@ -94,8 +94,9 @@ class SMSLoginForm(BootstrapStyle, forms.Form):
         user_object = UserInfo.objects.filter(phone=phone).first()
         if not user_object:
             self.add_error("phone", "请先注册")
-        # 将登录用户 写入session
-        self.request.session.setdefault("user_id", user_object.id)
+        else:
+            # 将登录用户 写入session
+            self.request.session.setdefault("user_id", user_object.id)
         return phone
 
     def clean_code(self):
@@ -133,7 +134,6 @@ class LoginForm(BootstrapStyle, forms.Form):
     def clean_code(self):
         code = self.cleaned_data.get("code")
         session_code_str = self.request.session.get("pcode")
-        print(code, session_code_str)
         if code != session_code_str:
             self.add_error("code", "验证码不正确")
             return code
