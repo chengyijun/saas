@@ -6,9 +6,8 @@ import django
 
 # ------------------------------ 环境 -------------------------------------
 
-
 base_dir = Path(__file__).resolve().parent.parent
-sys.path.append(base_dir)
+sys.path.append(str(base_dir))
 print("scipt init")
 # 加载配置文件，并启动一个虚拟的django服务
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "saas.settings")
