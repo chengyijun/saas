@@ -5,7 +5,7 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.db.models import QuerySet
 from django.forms import RadioSelect
 
-from web.models import UserInfo, Project, Wiki, FileRepository
+from web.models import UserInfo, Project, Wiki, FileRepository, Issues
 from web.utils.func import encrypt
 
 
@@ -21,9 +21,9 @@ class BootstrapStyle:
                 continue
             self.fields[field].widget.attrs.update({
                 'class':
-                'form-control',
+                    'form-control',
                 'placeholder':
-                f"请输入{self.fields[field].label}"
+                    f"请输入{self.fields[field].label}"
             })
 
 
@@ -128,7 +128,8 @@ class LoginForm(BootstrapStyle, forms.Form):
         if not user:
             self.add_error("password", "密码错误")
         # 将登录用户 写入session
-        self.request.session.setdefault("user_id", user.id)
+        else:
+            self.request.session.update({"user_id": user.id})
         return encrypt_password
 
     def clean_code(self):
@@ -183,3 +184,26 @@ class FileRepositoryModelForm(BootstrapStyle, forms.ModelForm):
     class Meta:
         model = FileRepository
         fields = ["name"]
+
+
+class IssuesModelForm(BootstrapStyle, forms.ModelForm):
+    exclude_names = ["desc"]
+
+    def __init__(self, request: WSGIRequest, *args, **kwargs):
+        super().__init__(request, *args, **kwargs)
+        old_class = self.fields["assign"].widget.attrs.get("class")
+        self.fields["assign"].widget.attrs["class"] = f"{old_class} selectpicker"
+        self.fields["assign"].widget.attrs["data-live-search"] = "true"
+
+        old_class = self.fields["attention"].widget.attrs.get("class")
+        self.fields["attention"].widget.attrs["class"] = f"{old_class} selectpicker"
+        self.fields["attention"].widget.attrs["data-live-search"] = "true"
+        self.fields["attention"].widget.attrs["multiple"] = "multiple"
+        self.fields["attention"].widget.attrs["data-actions-box"] = "true"
+        self.fields["attention"].widget.attrs["data-live-search-placeholder"] = "搜索关注人"
+        #      data-actions-box="true"
+        # data-live-search-placeholder="搜索"
+
+    class Meta:
+        model = Issues
+        exclude = ["project", "creator", "create_datetime", "last_update_datetime"]

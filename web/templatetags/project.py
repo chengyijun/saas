@@ -42,7 +42,7 @@ def manage_nav(request: WSGIRequest):
             "text": "文件"
         },
         {
-            "url": reverse("web:issuse", kwargs={"project_id": request.tracer.current_project.id}),
+            "url": reverse("web:issues", kwargs={"project_id": request.tracer.current_project.id}),
             "text": "问题"
         }
     ]

@@ -50,6 +50,7 @@
 
             <ul class="nav navbar-nav navbar-right">
                 {% if not request.tracer.user %}
+
                     <li><a href="{% url "web:register" %}">注册</a></li>
                     <li><a href="{% url "web:login" %}">登录</a></li>
 

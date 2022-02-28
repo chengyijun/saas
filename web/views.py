@@ -2,7 +2,6 @@
 import datetime
 from io import BytesIO
 from pathlib import Path
-from pprint import pprint
 from wsgiref.util import FileWrapper
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -15,7 +14,7 @@ from django.utils.encoding import escape_uri_path
 from django.views import View
 
 from web.forms import RegisterModelForm, SMSLoginForm, LoginForm, ProjectModelForm, WikiModelForm, \
-    FileRepositoryModelForm
+    FileRepositoryModelForm, IssuesModelForm
 from web.models import Transaction, PricePolicy, Project, ProjectUser, Wiki, FileRepository
 from web.utils.func import send_sms, create_png, get_order
 
@@ -315,7 +314,7 @@ class FileDirAddView(View):
             "project": request.tracer.current_project,
             "update_user": request.tracer.user
         }
-        pprint(data)
+
         # 将文件信息写入数据库
         FileRepository.objects.create(**data)
         return JsonResponse({"status": True})
@@ -354,15 +353,28 @@ class FileDownloadView(View):
                 response['Content-Length'] = file_path.stat().st_size
                 response[
                     'Content-Disposition'] = 'attachment; filename=' + escape_uri_path(
-                        file.name)
+                    file.name)
                 return response
             except Exception:
                 raise Http404
 
 
-class IssuseView(View):
+class IssuesView(View):
     def get(self, request: WSGIRequest, project_id: int):
-        return render(request, "issuse.html")
+        form = IssuesModelForm(request)
+        return render(request, "issues.html", {
+            "form": form,
+            "project_id": project_id
+        })
+
+    def post(self, request: WSGIRequest, project_id: int):
+        form = IssuesModelForm(request, data=request.POST)
+        if not form.is_valid():
+            return JsonResponse({"status": False, "errors": form.errors})
+        form.instance.project = request.tracer.current_project
+        form.instance.creator = request.tracer.user
+        form.save()
+        return JsonResponse({"status": True})
 
 
 class ProjectStarView(View):
@@ -426,7 +438,7 @@ class MduploadView(View):
             "success": 1,
             "message": "success!",
             "url":
-            f"http://127.0.0.1:8000/project/1/wiki/mddownload/{file.name}/"
+                f"http://127.0.0.1:8000/project/1/wiki/mddownload/{file.name}/"
         }
         response = JsonResponse(res)
         # 设置此消息头 放行frame的跨域问题 markdown-editor要求的
