@@ -26,4 +26,5 @@ PricePolicy.objects.create(
     project_space=10,
     project_file_size=2,
 )
+
 print("价格策略初始化完毕")

@@ -15,7 +15,7 @@ from django.views import View
 
 from web.forms import RegisterModelForm, SMSLoginForm, LoginForm, ProjectModelForm, WikiModelForm, \
     FileRepositoryModelForm, IssuesModelForm
-from web.models import Transaction, PricePolicy, Project, ProjectUser, Wiki, FileRepository
+from web.models import Transaction, PricePolicy, Project, ProjectUser, Wiki, FileRepository, IssuesType
 from web.utils.func import send_sms, create_png, get_order
 
 
@@ -169,7 +169,13 @@ class ProjectListView(View):
         if not form.is_valid():
             return JsonResponse({"status": False, "errors": form.errors})
         form.instance.creator = request.tracer.user
-        form.save()
+        instance = form.save()
+        objs = []
+        obj1 = IssuesType(title="缺陷", project=instance)
+        obj2 = IssuesType(title="任务", project=instance)
+        objs.append(obj1)
+        objs.append(obj2)
+        IssuesType.objects.bulk_create(objs)
         return JsonResponse({"status": True})
 
 

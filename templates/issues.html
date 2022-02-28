@@ -165,6 +165,22 @@
                             </div>
                         </div>
 
+                        <div class="form-group col-md-6">
+                            <label for="{{ form.start_date.id_for_label }}"
+                                   class="col-sm-2 control-label">{{ form.start_date.label }}</label>
+                            <div class="col-sm-10">
+                                {{ form.start_date }}
+                                <div class="error"></div>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="{{ form.end_date.id_for_label }}"
+                                   class="col-sm-2 control-label">{{ form.end_date.label }}</label>
+                            <div class="col-sm-10">
+                                {{ form.end_date }}
+                                <div class="error"></div>
+                            </div>
+                        </div>
 
                         <div class="form-group col-md-6">
                             <label for="{{ form.mode.id_for_label }}"
@@ -186,7 +202,7 @@
 
                 </div>
                 <div class="clearfix"></div>
-                <div class="modal-footer clearfix">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
                     <button type="button" id="submitIssues" class="btn btn-primary">提交更改</button>
                 </div>
@@ -233,7 +249,7 @@
                 // 渲染markdown编辑器
                 const editor = editormd("mded", {
                     width: "100%",
-                    height: "400px",
+                    height: "300px",
                     path: "{% static 'plugin/editor-md/lib/' %}",
                     imageUpload: true,
                     imageFormats: ["jpeg", "jpg", "png", "gif"],
