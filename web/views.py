@@ -375,8 +375,10 @@ class IssuesView(View):
         # 查询出所有issues
         issues: QuerySet = Issues.objects.filter(project_id=project_id)
         query_param = request.GET.dict()
+
+        current_page = int(query_param.get("page")) if query_param else 1
         pagination = Pagination(
-            current_page=int(query_param.get("page")),
+            current_page=current_page,
             total_count=issues.count(),
             prefix_url=request.path_info,
             query_param=query_param,

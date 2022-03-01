@@ -250,7 +250,7 @@
 
                         item.find(".r1>pre").html(v.content)
                         item.find(".r2").html("abel")
-                        item.find(".r2").append($("<a href=\"javascript:;\" onclick='getReplyID(" + v.id + ",this)'> 回复</a>"))
+                        item.find(".r2").append($("<a href=\"#textarea-reply\" onclick='getReplyID(" + v.id + ",this)'> 回复</a>"))
                         item.find(".r2>a").attr("ccc", v.content + "")
                         item.children(".child").attr("id", "id_" + v.id)
                         if (!v.reply_id) {
