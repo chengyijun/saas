@@ -20,6 +20,7 @@ from web.forms import RegisterModelForm, SMSLoginForm, LoginForm, ProjectModelFo
 from web.models import Transaction, PricePolicy, Project, ProjectUser, Wiki, FileRepository, IssuesType, Issues, \
     IssuesReply
 from web.utils.func import send_sms, create_png, get_order
+from web.utils.pagination import Pagination
 
 
 class SendSMSView(View):
@@ -370,13 +371,27 @@ class FileDownloadView(View):
 
 class IssuesView(View):
     def get(self, request: WSGIRequest, project_id: int):
+        pagination = None
         # 查询出所有issues
-        issues = Issues.objects.filter(project_id=project_id).all()
+        issues: QuerySet = Issues.objects.filter(project_id=project_id)
+        query_param = request.GET.dict()
+        pagination = Pagination(
+            current_page=int(query_param.get("page")),
+            total_count=issues.count(),
+            prefix_url=request.path_info,
+            query_param=query_param,
+            page_size=1
+        )
+
+        objs = issues[pagination.start: pagination.end]
         form = IssuesModelForm(request)
+
+        pagination_html = pagination.get_html()
         return render(request, "issues.html", {
             "form": form,
             "project_id": project_id,
-            "issues": issues
+            "issues": objs,
+            "pagination_html": pagination_html
         })
 
     def post(self, request: WSGIRequest, project_id: int):
