@@ -45,6 +45,8 @@ urlpatterns = [
         path("file/<int:file_id>/download", views.FileDownloadView.as_view(), name="file_download"),
 
         path("issues/", views.IssuesView.as_view(), name="issues"),
+        path("issues/<int:issue_id>/detail/", views.IssuesDetailView.as_view(), name="issues_detail"),
+        path("reply/<int:issue_id>/", views.ReplyView.as_view(), name="reply"),
 
         path("tree/", views.DirectoryTreeView.as_view(), name="tree"),
         path("wiki/mdupload/", views.MduploadView.as_view(), name="mdupload"),

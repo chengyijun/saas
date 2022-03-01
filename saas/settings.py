@@ -71,7 +71,8 @@ TEMPLATES = [
             # 指定自定义 inclusion_tag 函数位置
             # 使用下面配置之后  才可以在模版中使用 {% load project %}
             "libraries": {
-                "project": 'web.templatetags.project'
+                "project": 'web.templatetags.project',
+                "issue": 'web.templatetags.issue',
             }
         },
     },

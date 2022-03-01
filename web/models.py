@@ -184,5 +184,19 @@ class Issues(models.Model):
         return self.subject
 
 
+class IssuesReply(models.Model):
+    """问题回复"""
+    reply_type_choices = (
+        (1, "修改记录"),
+        (2, "回复"),
+    )
+    reply_type = models.IntegerField(verbose_name="类型", choices=reply_type_choices)
+    issues = models.ForeignKey(verbose_name="问题", to=Issues, on_delete=models.CASCADE)
+    content = models.TextField(verbose_name="描述")
+    creator = models.ForeignKey(verbose_name="创建者", to=UserInfo, on_delete=models.CASCADE)
+    reply = models.ForeignKey(verbose_name="回复", to="self", on_delete=models.CASCADE, null=True, blank=True)
+    create_datetime = models.DateTimeField(verbose_name="创建时间", auto_now_add=True)
+
+
 # 注册模型类 让django自带的后台可以进行管理
 admin.site.register([UserInfo, PricePolicy, Transaction, Project, ProjectUser, Wiki, FileRepository])

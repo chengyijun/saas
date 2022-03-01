@@ -1,0 +1,332 @@
+{% extends "layout/manage.html" %}
+{% load static %}
+
+{% block title %}
+    问题详情
+{% endblock title %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugin/editor-md/css/editormd.css' %}">
+    <link rel="stylesheet" href="{% static 'plugin/bootstrap-datetimepicker/css/bootstrap-datetimepicker.css' %}">
+    <link rel="stylesheet" href="{% static 'plugin/bootstrap-select/dist/css/bootstrap-select.css' %}">
+
+    <style>
+        .r1 {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .r1 > div {
+            background-color: cyan;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 50px;
+        }
+
+        .r1 > pre {
+            width: calc(100% - 60px);
+        }
+
+        .r2 {
+            margin-left: 60px;
+        }
+
+        .child {
+            margin-left: 60px;
+        }
+
+        #template {
+            display: none;
+        }
+
+        #textarea-reply {
+            margin-top: 10px;
+
+        }
+
+        #btn-reply {
+            margin-top: 10px;
+        }
+    </style>
+{% endblock css %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="panel panel-default col-md-7">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    问题详情
+                </h3>
+            </div>
+            <div class="panel-body">
+
+                <form class="form-horizontal" role="form">
+
+
+                    <div class="form-group">
+                        <label for="{{ form.issues_type.id_for_label }}"
+                               class="col-sm-2 control-label">{{ form.issues_type.label }}</label>
+                        <div class="col-sm-10">
+                            {{ form.issues_type }}
+                            <div class="error"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.module.id_for_label }}"
+                               class="col-sm-2 control-label">{{ form.module.label }}</label>
+                        <div class="col-sm-10">
+                            {{ form.module }}
+                            <div class="error"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.subject.id_for_label }}"
+                               class="col-sm-2 control-label">{{ form.subject.label }}</label>
+                        <div class="col-sm-10">
+                            {{ form.subject }}
+                            <div class="error"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.desc.id_for_label }}"
+                               class="col-sm-2 control-label">{{ form.desc.label }}</label>
+                        <div class="col-sm-10">
+                            <div id="mded">{{ form.desc }}</div>
+                            <div class="error"></div>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group col-md-6">
+                        <label for="{{ form.priority.id_for_label }}"
+                               class="col-sm-2 control-label">{{ form.priority.label }}</label>
+                        <div class="col-sm-10">
+                            {{ form.priority }}
+                            <div class="error"></div>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="{{ form.status.id_for_label }}"
+                               class="col-sm-2 control-label">{{ form.status.label }}</label>
+                        <div class="col-sm-10">
+                            {{ form.status }}
+                            <div class="error"></div>
+                        </div>
+                    </div>
+
+                    <div class="clearfix"></div>
+                    <div class="form-group col-md-6">
+                        <label for="{{ form.assign.id_for_label }}"
+                               class="col-sm-2 control-label">{{ form.assign.label }}</label>
+                        <div class="col-sm-10">
+                            {{ form.assign }}
+                            <div class="error"></div>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="{{ form.attention.id_for_label }}"
+                               class="col-sm-2 control-label">{{ form.attention.label }}</label>
+                        <div class="col-sm-10">
+                            {{ form.attention }}
+                            <div class="error"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        <label for="{{ form.start_date.id_for_label }}"
+                               class="col-sm-2 control-label">{{ form.start_date.label }}</label>
+                        <div class="col-sm-10">
+                            {{ form.start_date }}
+                            <div class="error"></div>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="{{ form.end_date.id_for_label }}"
+                               class="col-sm-2 control-label">{{ form.end_date.label }}</label>
+                        <div class="col-sm-10">
+                            {{ form.end_date }}
+                            <div class="error"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        <label for="{{ form.mode.id_for_label }}"
+                               class="col-sm-2 control-label">{{ form.mode.label }}</label>
+                        <div class="col-sm-10">
+                            {{ form.mode }}
+                            <div class="error"></div>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="{{ form.parent.id_for_label }}"
+                               class="col-sm-2 control-label">{{ form.parent.label }}</label>
+                        <div class="col-sm-10">
+                            {{ form.parent }}
+                            <div class="error"></div>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+        <div class="panel panel-default col-md-5">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    操作记录
+                </h3>
+            </div>
+            <div class="panel-body">
+
+                <div id="item-list"></div>
+
+                <textarea id="textarea-reply" name="" rows="6" class="form-control" placeholder="请输入评论"></textarea>
+                <button id="btn-reply" class="btn btn-primary">评论</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="template">
+        <div class="item">
+            <div class="r1">
+                <div>W</div>
+                <pre></pre>
+            </div>
+            <div class="r2">wupeiqi</div>
+
+            <div class="child"></div>
+        </div>
+    </div>
+{% endblock content %}
+
+
+{% block js %}
+    <script src="{% static 'plugin/editor-md/editormd.js' %}"></script>
+    <script src="{% static 'plugin/bootstrap-datetimepicker/js/bootstrap-datetimepicker.js' %}"></script>
+    <script src="{% static 'plugin/bootstrap-datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js' %}"></script>
+    <script src="{% static 'plugin/bootstrap-select/dist/js/bootstrap-select.js' %}"></script>
+    <script src="{% static 'plugin/bootstrap-select/dist/js/i18n/defaults-zh_CN.js' %}"></script>
+    <script>
+        let REPLY_ID = null
+        $(function () {
+            initMDE()
+            submitIssues()
+            getReplys()
+            submitReply()
+        })
+
+        function submitReply() {
+            $("#btn-reply").click(function () {
+                $.ajax({
+                    url: "{% url 'web:reply' project_id=project_id issue_id=issue_id %}",
+                    type: "post",
+                    data: {
+                        content: $("#textarea-reply").val(),
+                        reply_id: REPLY_ID
+                    },
+                    dataType: "json",
+                    success: function (res) {
+                        if (res.status) {
+                            location.reload()
+                        }
+                    }
+                })
+            })
+        }
+
+        function getReplys() {
+            $.ajax({
+                url: "{% url 'web:reply' project_id=project_id issue_id=issue_id %}",
+                type: "get",
+                dataType: "json",
+                success: function (res) {
+
+
+                    $.each(res.replies, function (k, v) {
+                        const item = $("#template").find(".item").clone()
+
+                        item.find(".r1>pre").html(v.content)
+                        item.find(".r2").html("abel")
+                        item.find(".r2").append($("<a href=\"javascript:;\" onclick='getReplyID(" + v.id + ",this)'> 回复</a>"))
+                        item.find(".r2>a").attr("ccc", v.content + "")
+                        item.children(".child").attr("id", "id_" + v.id)
+                        if (!v.reply_id) {
+                            $("#item-list").append(item)
+                        } else {
+                            $("#id_" + v.reply_id).append(item)
+
+                        }
+                    })
+                }
+            })
+        }
+
+        function getReplyID(replyID, that) {
+            REPLY_ID = replyID
+            $("#textarea-reply").attr("placeholder", "回复：" + $(that).attr("ccc"))
+        }
+
+        function submitIssues() {
+            $("#submitIssues").click(function () {
+
+                $(".error").empty()
+                $.ajax({
+                    url: "{% url 'web:issues' project_id=project_id %}",
+                    type: "post",
+                    data: $("form").serialize(),
+                    dataType: "json",
+                    success: function (res) {
+
+                        $.each(res.errors, function (k, v) {
+                            $("#id_" + k).next().text(v[0])
+                        })
+                    }
+                })
+            })
+        }
+
+        function initMDE() {
+
+            // 渲染markdown编辑器
+            const editor = editormd("mded", {
+                width: "100%",
+                height: "300px",
+                path: "{% static 'plugin/editor-md/lib/' %}",
+                imageUpload: true,
+                imageFormats: ["jpeg", "jpg", "png", "gif"],
+                imageUploadURL: "{% url 'web:mdupload' project_id=project_id%}",
+                onload: function () {
+                    this.previewing();
+                }
+            });
+
+
+        }
+    </script>
+
+    <script type="text/javascript">
+        $('#id_start_date').datetimepicker({
+            forceParse: 0,//设置为0，时间不会跳转1899，会显示当前时间。
+            language: 'zh-CN',//显示中文
+            format: 'yyyy-mm-dd',//显示格式
+            minView: "month",//设置只显示到月份
+            initialDate: new Date(),//初始化当前日期
+            autoclose: true,//选中自动关闭
+            todayBtn: true//显示今日按钮
+        })
+        $("#id_start_date").datetimepicker("setDate", new Date());  //设置显示默认当天的时间
+
+        $('#id_end_date').datetimepicker({
+            forceParse: 0,//设置为0，时间不会跳转1899，会显示当前时间。
+            language: 'zh-CN',//显示中文
+            format: 'yyyy-mm-dd',//显示格式
+            minView: "month",//设置只显示到月份
+            initialDate: new Date(),//初始化当前日期
+            autoclose: true,//选中自动关闭
+            todayBtn: true//显示今日按钮
+        })
+    </script>
+{% endblock js %}

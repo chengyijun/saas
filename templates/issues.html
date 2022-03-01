@@ -1,5 +1,6 @@
 {% extends "layout/manage.html" %}
 {% load static %}
+{% load issue %}
 
 {% block title %}
     问题
@@ -66,15 +67,16 @@
                     <button class="btn btn-info">邀请成员</button>
                 </div>
 
+                {% for issue in issues %}
+                    <dl>
+                        <dt><a href="{% url 'web:issues_detail' project_id=project_id issue_id=issue.id %}">
+                            {% get_id_just issue.id %}
+                        </a> {{ issue.subject }}</dt>
+                        <dd>{{ issue.issues_type }} {{ issue.get_status_display }} {{ issue.creator }} {{ issue.create_datetime }}</dd>
+                    </dl>
+                {% endfor %}
 
-                <dl>
-                    <dt>#010 问题一</dt>
-                    <dd>功能 已解决 创建者 创建日期</dd>
-                </dl>
-                <dl>
-                    <dt>#010 问题一</dt>
-                    <dd>功能 已解决 创建者 创建日期</dd>
-                </dl>
+
             </div>
         </div>
     </div>

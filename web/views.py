@@ -2,10 +2,12 @@
 import datetime
 from io import BytesIO
 from pathlib import Path
+from pprint import pprint
 from wsgiref.util import FileWrapper
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.handlers.wsgi import WSGIRequest
+from django.db.models import QuerySet
 from django.forms import model_to_dict
 from django.http import JsonResponse, HttpResponse, FileResponse, Http404
 from django.shortcuts import render, redirect
@@ -15,7 +17,8 @@ from django.views import View
 
 from web.forms import RegisterModelForm, SMSLoginForm, LoginForm, ProjectModelForm, WikiModelForm, \
     FileRepositoryModelForm, IssuesModelForm
-from web.models import Transaction, PricePolicy, Project, ProjectUser, Wiki, FileRepository, IssuesType
+from web.models import Transaction, PricePolicy, Project, ProjectUser, Wiki, FileRepository, IssuesType, Issues, \
+    IssuesReply
 from web.utils.func import send_sms, create_png, get_order
 
 
@@ -367,10 +370,13 @@ class FileDownloadView(View):
 
 class IssuesView(View):
     def get(self, request: WSGIRequest, project_id: int):
+        # 查询出所有issues
+        issues = Issues.objects.filter(project_id=project_id).all()
         form = IssuesModelForm(request)
         return render(request, "issues.html", {
             "form": form,
-            "project_id": project_id
+            "project_id": project_id,
+            "issues": issues
         })
 
     def post(self, request: WSGIRequest, project_id: int):
@@ -381,6 +387,42 @@ class IssuesView(View):
         form.instance.creator = request.tracer.user
         form.save()
         return JsonResponse({"status": True})
+
+
+class IssuesDetailView(View):
+    def get(self, request: WSGIRequest, project_id: int, issue_id: int):
+        instance = Issues.objects.filter(id=issue_id, creator__project=request.tracer.current_project).first()
+        form = IssuesModelForm(request, instance=instance)
+        return render(request, "issues_detail.html", {
+            "form": form,
+            "project_id": project_id,
+            "issue_id": issue_id
+        })
+
+
+class ReplyView(View):
+    def get(self, request: WSGIRequest, project_id: int, issue_id: int):
+        # 查询所有问题回复
+        issues_replies: QuerySet = IssuesReply.objects.filter(issues_id=issue_id)
+        return JsonResponse({
+            "status": True,
+            "replies": list(issues_replies.values())
+        })
+
+    def post(self, request: WSGIRequest, project_id: int, issue_id: int):
+        post_dict = request.POST.dict()
+        pprint(post_dict)
+        IssuesReply.objects.create(
+            reply_type=2,
+            content=post_dict.get("content"),
+            creator=request.tracer.user,
+            issues_id=issue_id,
+            reply_id=post_dict.get("reply_id")
+        )
+
+        return JsonResponse({
+            "status": True,
+        })
 
 
 class ProjectStarView(View):
