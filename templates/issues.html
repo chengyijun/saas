@@ -69,9 +69,14 @@
 
                 {% for issue in issues %}
                     <dl>
-                        <dt><a href="{% url 'web:issues_detail' project_id=project_id issue_id=issue.id %}">
-                            {% get_id_just issue.id %}
-                        </a> {{ issue.subject }}</dt>
+                        <dt>
+                            <a href="{% url 'web:issues_detail' project_id=project_id issue_id=issue.id %}">
+                                {% get_id_just issue.id %}
+                            </a>
+                            <a href="{% url 'web:issues_detail' project_id=project_id issue_id=issue.id %}">
+                                {{ issue.subject }}
+                            </a>
+                        </dt>
                         <dd>{{ issue.issues_type }} {{ issue.get_status_display }} {{ issue.creator }} {{ issue.create_datetime }}</dd>
                     </dl>
                 {% endfor %}
@@ -240,10 +245,14 @@
                     data: $("form").serialize(),
                     dataType: "json",
                     success: function (res) {
-                        console.log(res)
-                        $.each(res.errors, function (k, v) {
-                            $("#id_" + k).next().text(v[0])
-                        })
+
+                        if (res.status) {
+                            location.reload()
+                        } else {
+                            $.each(res.errors, function (k, v) {
+                                $("#id_" + k).next().text(v[0])
+                            })
+                        }
                     }
                 })
             })
