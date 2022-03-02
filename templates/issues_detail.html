@@ -62,7 +62,7 @@
             </div>
             <div class="panel-body">
 
-                <form class="form-horizontal" role="form">
+                <form class="form-horizontal" role="form" id="myform">
 
 
                     <div class="form-group">
@@ -211,11 +211,14 @@
     <script src="{% static 'plugin/bootstrap-select/dist/js/i18n/defaults-zh_CN.js' %}"></script>
     <script>
         let REPLY_ID = null
+        let MDEDIT;
         $(function () {
             initMDE()
+            initDateTime()
             submitIssues()
             getReplys()
             submitReply()
+            bindChangEvent()
         })
 
         function submitReply() {
@@ -243,22 +246,8 @@
                 type: "get",
                 dataType: "json",
                 success: function (res) {
-
-
                     $.each(res.replies, function (k, v) {
-                        const item = $("#template").find(".item").clone()
-
-                        item.find(".r1>pre").html(v.content)
-                        item.find(".r2").html("abel")
-                        item.find(".r2").append($("<a href=\"#textarea-reply\" onclick='getReplyID(" + v.id + ",this)'> 回复</a>"))
-                        item.find(".r2>a").attr("ccc", v.content + "")
-                        item.children(".child").attr("id", "id_" + v.id)
-                        if (!v.reply_id) {
-                            $("#item-list").append(item)
-                        } else {
-                            $("#id_" + v.reply_id).append(item)
-
-                        }
+                        addReplyRecordOnHtml(v)
                     })
                 }
             })
@@ -291,7 +280,7 @@
         function initMDE() {
 
             // 渲染markdown编辑器
-            const editor = editormd("mded", {
+            MDEDIT = editormd("mded", {
                 width: "100%",
                 height: "300px",
                 path: "{% static 'plugin/editor-md/lib/' %}",
@@ -300,33 +289,102 @@
                 imageUploadURL: "{% url 'web:mdupload' project_id=project_id%}",
                 onload: function () {
                     this.previewing();
+                },
+                toolbarIcons: function () {
+                    return ["bold", "hr", "del", "italic", "quote", "|", "image", "preview", "watch", "fullscreen", "||", "save"]
+                },
+                toolbarCustomIcons: {
+                    save: "<button class='btn  btn-info btn-sm' onclick='saveDesc()'>保存</button>"
                 }
             });
 
 
         }
+
+        function initDateTime() {
+            $('#id_start_date').datetimepicker({
+                forceParse: 0,//设置为0，时间不会跳转1899，会显示当前时间。
+                language: 'zh-CN',//显示中文
+                format: 'yyyy-mm-dd',//显示格式
+                minView: "month",//设置只显示到月份
+                initialDate: new Date(),//初始化当前日期
+                autoclose: true,//选中自动关闭
+                todayBtn: true//显示今日按钮
+            })
+            $("#id_start_date").datetimepicker("setDate", new Date());  //设置显示默认当天的时间
+
+            $('#id_end_date').datetimepicker({
+                forceParse: 0,//设置为0，时间不会跳转1899，会显示当前时间。
+                language: 'zh-CN',//显示中文
+                format: 'yyyy-mm-dd',//显示格式
+                minView: "month",//设置只显示到月份
+                initialDate: new Date(),//初始化当前日期
+                autoclose: true,//选中自动关闭
+                todayBtn: true//显示今日按钮
+            })
+        }
+
+        function bindChangEvent() {
+            $("#myform").find(".form-control").change(function () {
+
+                let data = {
+                    name: $(this).attr("name"),
+                    value: $(this).val()
+                }
+
+                sendChang(data)
+            })
+        }
+
+        function sendChang(data) {
+            $(".error").empty()
+            $.ajax({
+                url: "{% url 'web:issues_update' project_id=project_id issue_id=issue_id %}",
+                type: "post",
+                data: JSON.stringify(data),
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8'
+                },
+                dataType: "json",
+                success: function (res) {
+                    console.log(res)
+
+
+                    if (res.status) {
+                        addReplyRecordOnHtml(res.reply);
+                    } else {
+                        // 没有修改成功 处理res.error
+                        $("#id_" + res.error.name).next().text(res.error.value)
+                    }
+                }
+            })
+        }
+
+        function saveDesc() {
+            console.log("save desc")
+            let data = {
+                name: "desc",
+                value: MDEDIT.getValue()
+            }
+            sendChang(data)
+        }
+
+        function addReplyRecordOnHtml(v) {
+            const item = $("#template").find(".item").clone()
+
+            item.find(".r1>pre").html(v.content)
+            item.find(".r2").html("abel")
+            item.find(".r2").append($("<a href=\"#textarea-reply\" onclick='getReplyID(" + v.id + ",this)'> 回复</a>"))
+            item.find(".r2>a").attr("ccc", v.content + "")
+            item.children(".child").attr("id", "id_" + v.id)
+            if (!v.reply_id) {
+                $("#item-list").append(item)
+            } else {
+                $("#id_" + v.reply_id).append(item)
+
+            }
+        }
     </script>
 
-    <script type="text/javascript">
-        $('#id_start_date').datetimepicker({
-            forceParse: 0,//设置为0，时间不会跳转1899，会显示当前时间。
-            language: 'zh-CN',//显示中文
-            format: 'yyyy-mm-dd',//显示格式
-            minView: "month",//设置只显示到月份
-            initialDate: new Date(),//初始化当前日期
-            autoclose: true,//选中自动关闭
-            todayBtn: true//显示今日按钮
-        })
-        $("#id_start_date").datetimepicker("setDate", new Date());  //设置显示默认当天的时间
 
-        $('#id_end_date').datetimepicker({
-            forceParse: 0,//设置为0，时间不会跳转1899，会显示当前时间。
-            language: 'zh-CN',//显示中文
-            format: 'yyyy-mm-dd',//显示格式
-            minView: "month",//设置只显示到月份
-            initialDate: new Date(),//初始化当前日期
-            autoclose: true,//选中自动关闭
-            todayBtn: true//显示今日按钮
-        })
-    </script>
 {% endblock js %}

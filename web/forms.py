@@ -192,18 +192,28 @@ class IssuesModelForm(BootstrapStyle, forms.ModelForm):
     def __init__(self, request: WSGIRequest, *args, **kwargs):
         super().__init__(request, *args, **kwargs)
         old_class = self.fields["assign"].widget.attrs.get("class")
-        self.fields["assign"].widget.attrs["class"] = f"{old_class} selectpicker"
+        self.fields["assign"].widget.attrs[
+            "class"] = f"{old_class} selectpicker"
         self.fields["assign"].widget.attrs["data-live-search"] = "true"
 
         old_class = self.fields["attention"].widget.attrs.get("class")
-        self.fields["attention"].widget.attrs["class"] = f"{old_class} selectpicker"
+        self.fields["attention"].widget.attrs[
+            "class"] = f"{old_class} selectpicker"
         self.fields["attention"].widget.attrs["data-live-search"] = "true"
         self.fields["attention"].widget.attrs["multiple"] = "multiple"
         self.fields["attention"].widget.attrs["data-actions-box"] = "true"
-        self.fields["attention"].widget.attrs["data-live-search-placeholder"] = "搜索关注人"
+        self.fields["attention"].widget.attrs[
+            "data-live-search-placeholder"] = "搜索关注人"
         #      data-actions-box="true"
         # data-live-search-placeholder="搜索"
+        issues: QuerySet = Issues.objects.filter(
+            project=request.tracer.current_project).all()
+        datas = [("", "-- 请选择 --")]
+        datas.extend(issues.values_list("id", "subject"))
+        self.fields["parent"].choices = datas
 
     class Meta:
         model = Issues
-        exclude = ["project", "creator", "create_datetime", "last_update_datetime"]
+        exclude = [
+            "project", "creator", "create_datetime", "last_update_datetime"
+        ]

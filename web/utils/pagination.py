@@ -5,7 +5,13 @@ from math import ceil
 
 
 class Pagination:
-    def __init__(self, current_page: int, total_count: int, prefix_url: str, query_param: dict, page_size: int = 1):
+
+    def __init__(self,
+                 current_page: int,
+                 total_count: int,
+                 prefix_url: str,
+                 query_param: dict,
+                 page_size: int = 1):
         self.current_page = current_page
         self.prefix_url = prefix_url
         self.query_param = query_param

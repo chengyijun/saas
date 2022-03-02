@@ -12,6 +12,7 @@
 # a = {'one': 1, 'two': 2, 'three': 3}
 # a.update({'one': 4.5, 'four': 9.3})
 # print(a)
+
 targets = [0, 1, 2, 3]
 print(targets[0:2])
 print(targets[2:4])

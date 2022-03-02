@@ -1,5 +1,6 @@
 # Create your views here.
 import datetime
+import json
 from io import BytesIO
 from pathlib import Path
 from pprint import pprint
@@ -7,7 +8,7 @@ from wsgiref.util import FileWrapper
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.handlers.wsgi import WSGIRequest
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Field
 from django.forms import model_to_dict
 from django.http import JsonResponse, HttpResponse, FileResponse, Http404
 from django.shortcuts import render, redirect
@@ -18,12 +19,13 @@ from django.views import View
 from web.forms import RegisterModelForm, SMSLoginForm, LoginForm, ProjectModelForm, WikiModelForm, \
     FileRepositoryModelForm, IssuesModelForm
 from web.models import Transaction, PricePolicy, Project, ProjectUser, Wiki, FileRepository, IssuesType, Issues, \
-    IssuesReply
+    IssuesReply, UserInfo
 from web.utils.func import send_sms, create_png, get_order
 from web.utils.pagination import Pagination
 
 
 class SendSMSView(View):
+
     def get(self, request: WSGIRequest):
         phone = request.GET.dict().get("phone")
         # code = random.randint(1000, 9999)
@@ -34,6 +36,7 @@ class SendSMSView(View):
 
 
 class RegisterView(View):
+
     def get(self, request):
         form = RegisterModelForm(request)
         return render(request, "register.html", {"form": form})
@@ -67,6 +70,7 @@ class RegisterView(View):
 
 
 class SMSLoginView(View):
+
     def get(self, request: WSGIRequest):
         form = SMSLoginForm(request)
         return render(request, "smslogin.html", {"form": form})
@@ -88,17 +92,20 @@ class SMSLoginView(View):
 
 
 class IndexView(View):
+
     def get(self, request: WSGIRequest):
         return render(request, "index.html")
 
 
 class LogoutView(View):
+
     def get(self, request: WSGIRequest):
         request.session.flush()
         return redirect(reverse("web:index"))
 
 
 class CodeView(View):
+
     def get(self, request: WSGIRequest):
         img, code = create_png()
         # 字典 新增键值对 有update()和setdefault()两种方法
@@ -115,6 +122,7 @@ class CodeView(View):
 
 
 class LoginView(View):
+
     def get(self, request: WSGIRequest):
         form = LoginForm(request)
         return render(request, "login.html", {"form": form})
@@ -136,6 +144,7 @@ class LoginView(View):
 
 
 class ProjectListView(View):
+
     def get(self, request: WSGIRequest):
         # 查询出我创建的项目
         own_projects = Project.objects.filter(
@@ -177,13 +186,16 @@ class ProjectListView(View):
         objs = []
         obj1 = IssuesType(title="缺陷", project=instance)
         obj2 = IssuesType(title="任务", project=instance)
+        obj3 = IssuesType(title="需求", project=instance)
         objs.append(obj1)
         objs.append(obj2)
+        objs.append(obj3)
         IssuesType.objects.bulk_create(objs)
         return JsonResponse({"status": True})
 
 
 class WIKIView(View):
+
     def get(self, request: WSGIRequest, project_id: int):
         form = WikiModelForm(request)
         return render(request, "wiki_add.html", {
@@ -202,6 +214,7 @@ class WIKIView(View):
 
 
 class WIKIAddView(View):
+
     def get(self, request: WSGIRequest, project_id: int):
         form = WikiModelForm(request)
         return render(request, "wiki_form.html", {
@@ -212,6 +225,7 @@ class WIKIAddView(View):
 
 
 class WIKIShowView(View):
+
     def get(self, request: WSGIRequest, project_id: int, wiki_id: int):
         form = WikiModelForm(request)
         wiki = Wiki.objects.filter(id=wiki_id).first()
@@ -225,6 +239,7 @@ class WIKIShowView(View):
 
 
 class WIKIEditView(View):
+
     def get(self, request: WSGIRequest, project_id: int, wiki_id: int):
         instance = Wiki.objects.filter(id=wiki_id).first()
         form = WikiModelForm(request, instance=instance)
@@ -244,6 +259,7 @@ class WIKIEditView(View):
 
 
 class FileView(View):
+
     def get(self, request: WSGIRequest, project_id: int, parent_id: int):
         # 查询出所有文、文件夹
         if parent_id == 0:
@@ -309,6 +325,7 @@ class FileView(View):
 
 
 class FileDirAddView(View):
+
     def post(self, request: WSGIRequest, project_id: int):
         post_dict = request.POST.dict()
 
@@ -331,6 +348,7 @@ class FileDirAddView(View):
 
 
 class FileDeleteView(View):
+
     def get(self, request: WSGIRequest, project_id: int, file_id: int):
         file: FileRepository = FileRepository.objects.filter(
             id=file_id).first()
@@ -351,6 +369,7 @@ class FileDeleteView(View):
 
 
 class FileDownloadView(View):
+
     def get(self, request: WSGIRequest, project_id: int, file_id: int):
         file: FileRepository = FileRepository.objects.filter(
             id=file_id).first()
@@ -370,6 +389,7 @@ class FileDownloadView(View):
 
 
 class IssuesView(View):
+
     def get(self, request: WSGIRequest, project_id: int):
         objs = None
         pagination_html = ""
@@ -380,23 +400,22 @@ class IssuesView(View):
             query_param = request.GET.dict()
 
             current_page = int(query_param.get("page")) if query_param else 1
-            pagination = Pagination(
-                current_page=current_page,
-                total_count=issues.count(),
-                prefix_url=request.path_info,
-                query_param=query_param,
-                page_size=1
-            )
+            pagination = Pagination(current_page=current_page,
+                                    total_count=issues.count(),
+                                    prefix_url=request.path_info,
+                                    query_param=query_param,
+                                    page_size=1)
 
-            objs = issues[pagination.start: pagination.end]
+            objs = issues[pagination.start:pagination.end]
 
             pagination_html = pagination.get_html()
-        return render(request, "issues.html", {
-            "form": form,
-            "project_id": project_id,
-            "issues": objs,
-            "pagination_html": pagination_html
-        })
+        return render(
+            request, "issues.html", {
+                "form": form,
+                "project_id": project_id,
+                "issues": objs,
+                "pagination_html": pagination_html
+            })
 
     def post(self, request: WSGIRequest, project_id: int):
         form = IssuesModelForm(request, data=request.POST)
@@ -409,8 +428,11 @@ class IssuesView(View):
 
 
 class IssuesDetailView(View):
+
     def get(self, request: WSGIRequest, project_id: int, issue_id: int):
-        instance = Issues.objects.filter(id=issue_id, creator__project=request.tracer.current_project).first()
+        instance = Issues.objects.filter(
+            id=issue_id,
+            creator__project=request.tracer.current_project).first()
         form = IssuesModelForm(request, instance=instance)
         return render(request, "issues_detail.html", {
             "form": form,
@@ -419,10 +441,176 @@ class IssuesDetailView(View):
         })
 
 
+class IssuesUpdateView(View):
+
+    def post(self, request: WSGIRequest, project_id: int, issue_id: int):
+        post_dict = json.loads(request.body.decode("utf-8"))
+        print(post_dict)
+        name = post_dict.get("name")
+        value = post_dict.get("value")
+        instance: Issues = Issues.objects.filter(
+            id=issue_id, project_id=project_id).first()
+        field: Field = Issues._meta.get_field(name)
+
+        if name in ["subject", "desc", "start_date", "end_date"]:
+            # 处理文本字段
+            if not value:
+                # 用户输入为空
+                if not field.null:
+                    # 字段不能为空
+                    return JsonResponse({
+                        "status": False,
+                        "error": {
+                            "name": name,
+                            "value": "字段不能为空"
+                        }
+                    })
+                setattr(instance, name, None)
+                instance.save()
+                content = f"{field.verbose_name}修改为了空值"
+            else:
+                # 用户输入不为空
+                setattr(instance, name, value)
+                instance.save()
+                content = f"{field.verbose_name}修改为了{value}"
+        elif name in ["priority", "status", "mode"]:
+            # 处理CH字段
+            # 判断 传递过来的choice文本是否合法
+            for k, v in field.choices:
+                if value == str(k):
+                    # 合法
+                    setattr(instance, name, value)
+                    instance.save()
+                    content = f"{field.verbose_name}更新为了 {v}"
+                    break
+            else:
+                return JsonResponse({"status": False, "error": "数据非法"})
+        elif name in ["issues_type", "module", "assign", "parent"]:
+            if name == "assign":
+                if not value:
+                    if not field.null:
+                        return JsonResponse({
+                            "status": False,
+                            "error": {
+                                "name": name,
+                                "value": "不能为空值"
+                            }
+                        })
+                    setattr(instance, name, None)
+                    instance.save()
+                    content = f"{field.verbose_name}更新为 空值"
+                else:
+                    # 处理fk是assign的情况
+                    target_obj = field.related_model.objects.filter(
+                        id=int(value)).first()
+                    if target_obj:
+                        pus = ProjectUser.objects.filter(
+                            project_id=project_id).all()
+                        ids = [pu.user_id for pu in pus]
+                        # 判断是不是项目创建者
+                        if request.tracer.current_project.creator.id == target_obj.id:
+                            setattr(instance, name, target_obj)
+                            instance.save()
+                            content = f"{field.verbose_name}更新为 {str(target_obj)}"
+                        # 判断是不是项目参与者
+                        elif target_obj.id in ids:
+                            setattr(instance, name, target_obj)
+                            instance.save()
+                            content = f"{field.verbose_name}更新为 {str(target_obj)}"
+                        else:
+                            return JsonResponse({
+                                "status": False,
+                                "error": {
+                                    "name": name,
+                                    "value": "既不是创建者也不是参与者"
+                                }
+                            })
+                    else:
+                        return JsonResponse({
+                            "status": False,
+                            "error": {
+                                "name": name,
+                                "value": "非法数据"
+                            }
+                        })
+
+            else:
+                # 处理FK字段
+                # 合法性校验
+                if not value:
+                    if not field.null:
+                        return JsonResponse({
+                            "status": False,
+                            "error": {
+                                "name": name,
+                                "value": "不能为空值"
+                            }
+                        })
+                    setattr(instance, name, None)
+                    instance.save()
+                    content = f"{field.verbose_name}更新为 空值"
+                else:
+                    rel_obj = field.related_model.objects.filter(
+                        id=int(value), project_id=project_id).first()
+                    if rel_obj:
+                        if str(instance) == str(rel_obj):
+                            return JsonResponse({
+                                "status": False,
+                                "error": {
+                                    "name": name,
+                                    "value": "不能选择自身"
+                                }
+                            })
+                        setattr(instance, name, rel_obj)
+                        instance.save()
+                        content = f"{field.verbose_name}更新为 {str(rel_obj)}"
+                    else:
+                        return JsonResponse({
+                            "status": False,
+                            "error": {
+                                "name": name,
+                                "value": "数据非法"
+                            }
+                        })
+        elif name in ["attention"]:
+            # 处理M2M字段
+            if not isinstance(value, list):
+                return JsonResponse({
+                    "status": False,
+                    "error": {
+                        "name": name,
+                        "value": "数据非法"
+                    }
+                })
+            if not value:
+                instance.attention.set(value)
+                content = f"{field.verbose_name}更新为 空值"
+
+            else:
+                instance.attention.set(value)
+                names = [
+                    str(UserInfo.objects.filter(id=int(v)).first())
+                    for v in value
+                ]
+                names_str = ",".join(names)
+                content = f"{field.verbose_name}更新为 {names_str}"
+        # 创建一条操作记录
+        reply_obj: IssuesReply = IssuesReply.objects.create(
+            reply_type=1,
+            issues=instance,
+            content=content,
+            creator=request.tracer.user)
+        reply = model_to_dict(reply_obj)
+
+        return JsonResponse({"status": True, "reply": reply})
+
+
 class ReplyView(View):
+
     def get(self, request: WSGIRequest, project_id: int, issue_id: int):
         # 查询所有问题回复
-        issues_replies: QuerySet = IssuesReply.objects.filter(issues_id=issue_id)
+        issues_replies: QuerySet = IssuesReply.objects.filter(
+            issues_id=issue_id)
         return JsonResponse({
             "status": True,
             "replies": list(issues_replies.values())
@@ -431,13 +619,11 @@ class ReplyView(View):
     def post(self, request: WSGIRequest, project_id: int, issue_id: int):
         post_dict = request.POST.dict()
         pprint(post_dict)
-        IssuesReply.objects.create(
-            reply_type=2,
-            content=post_dict.get("content"),
-            creator=request.tracer.user,
-            issues_id=issue_id,
-            reply_id=post_dict.get("reply_id")
-        )
+        IssuesReply.objects.create(reply_type=2,
+                                   content=post_dict.get("content"),
+                                   creator=request.tracer.user,
+                                   issues_id=issue_id,
+                                   reply_id=post_dict.get("reply_id"))
 
         return JsonResponse({
             "status": True,
@@ -445,6 +631,7 @@ class ReplyView(View):
 
 
 class ProjectStarView(View):
+
     def get(self, request: WSGIRequest, project_id: int):
         """我创建的项目 星标"""
         obj: Project = Project.objects.filter(creator=request.tracer.user,
@@ -465,6 +652,7 @@ class ProjectStarView(View):
 
 
 class ProjectUnstarView(View):
+
     def get(self, request: WSGIRequest, project_id: int):
         """我创建的项目 取消星标"""
         obj: Project = Project.objects.filter(creator=request.tracer.user,
@@ -485,6 +673,7 @@ class ProjectUnstarView(View):
 
 
 class DirectoryTreeView(View):
+
     def get(self, request: WSGIRequest, project_id: int):
         wikis = Wiki.objects.filter(project_id=project_id).all()
         datas = [model_to_dict(wiki) for wiki in wikis]
@@ -492,6 +681,7 @@ class DirectoryTreeView(View):
 
 
 class MduploadView(View):
+
     def post(self, request: WSGIRequest, project_id: int):
         file: InMemoryUploadedFile = request.FILES.get("editormd-image-file")
         uploads = Path("uploads")
@@ -514,6 +704,7 @@ class MduploadView(View):
 
 
 class MddownloadView(View):
+
     def get(self, request: WSGIRequest, project_id: int, filename: str):
         target_file = Path("uploads").resolve().joinpath(filename)
         return FileResponse(FileWrapper(open(target_file, "rb")))
