@@ -28,3 +28,5 @@ PricePolicy.objects.create(
 )
 
 print("价格策略初始化完毕")
+
+

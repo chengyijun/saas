@@ -371,24 +371,26 @@ class FileDownloadView(View):
 
 class IssuesView(View):
     def get(self, request: WSGIRequest, project_id: int):
-        pagination = None
+        objs = None
+        pagination_html = ""
         # 查询出所有issues
         issues: QuerySet = Issues.objects.filter(project_id=project_id)
-        query_param = request.GET.dict()
-
-        current_page = int(query_param.get("page")) if query_param else 1
-        pagination = Pagination(
-            current_page=current_page,
-            total_count=issues.count(),
-            prefix_url=request.path_info,
-            query_param=query_param,
-            page_size=1
-        )
-
-        objs = issues[pagination.start: pagination.end]
         form = IssuesModelForm(request)
+        if issues:
+            query_param = request.GET.dict()
 
-        pagination_html = pagination.get_html()
+            current_page = int(query_param.get("page")) if query_param else 1
+            pagination = Pagination(
+                current_page=current_page,
+                total_count=issues.count(),
+                prefix_url=request.path_info,
+                query_param=query_param,
+                page_size=1
+            )
+
+            objs = issues[pagination.start: pagination.end]
+
+            pagination_html = pagination.get_html()
         return render(request, "issues.html", {
             "form": form,
             "project_id": project_id,
