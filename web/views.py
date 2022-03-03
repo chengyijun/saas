@@ -3,7 +3,7 @@ import datetime
 import json
 from io import BytesIO
 from pathlib import Path
-from pprint import pprint
+from typing import Tuple
 from wsgiref.util import FileWrapper
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -14,6 +14,7 @@ from django.http import JsonResponse, HttpResponse, FileResponse, Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.encoding import escape_uri_path
+from django.utils.safestring import mark_safe
 from django.views import View
 
 from web.forms import RegisterModelForm, SMSLoginForm, LoginForm, ProjectModelForm, WikiModelForm, \
@@ -382,10 +383,36 @@ class FileDownloadView(View):
                 response['Content-Length'] = file_path.stat().st_size
                 response[
                     'Content-Disposition'] = 'attachment; filename=' + escape_uri_path(
-                    file.name)
+                        file.name)
                 return response
             except Exception:
                 raise Http404
+
+
+class SelectFilter:
+
+    def __init__(self, name: str, datas: Tuple, request: WSGIRequest):
+        self.name = name
+        self.datas = datas
+        self.request = request
+
+    def __iter__(self):
+        for k, v in self.datas:
+            checked = ""
+            selected_datas = self.request.GET.getlist(self.name)
+            target_dict = self.request.GET.copy()
+
+            if str(k) in selected_datas:
+                checked = "checked"
+                selected_datas.remove(str(k))
+            else:
+                selected_datas.append(str(k))
+            target_dict._mutable = True
+            target_dict.setlist(self.name, selected_datas)
+            url = f"{self.request.path_info}?{target_dict.urlencode()}"
+            yield mark_safe(
+                f'<a id="id_{k}" href="{url}"><input  type="checkbox" {checked}/><label for="id_{k}">{v}</label></a>'
+            )
 
 
 class IssuesView(View):
@@ -394,27 +421,50 @@ class IssuesView(View):
         objs = None
         pagination_html = ""
         # 查询出所有issues
-        issues: QuerySet = Issues.objects.filter(project_id=project_id)
+        # 允许的查询参数
+        query_dict = {}
+        allowed_params = ["issues_type", "status", "priority"]
+        for allowed_param in allowed_params:
+            getlist = request.GET.getlist(allowed_param)
+            if getlist:
+                query_dict[f"{allowed_param}__in"] = getlist
+
+        issues: QuerySet = Issues.objects.filter(project_id=project_id).filter(
+            **query_dict)
         form = IssuesModelForm(request)
         if issues:
-            query_param = request.GET.dict()
-
-            current_page = int(query_param.get("page")) if query_param else 1
+            query_param = request.GET
+            current_page = int(query_param.get("page", 1))
             pagination = Pagination(current_page=current_page,
                                     total_count=issues.count(),
                                     prefix_url=request.path_info,
                                     query_param=query_param,
-                                    page_size=1)
+                                    page_size=10)
 
             objs = issues[pagination.start:pagination.end]
 
             pagination_html = pagination.get_html()
+
+        # 构造 issues_type 二位元组
+        issues_type_objs: QuerySet = IssuesType.objects.filter(
+            project_id=project_id).all()
+        issues_type_datas = tuple(issues_type_objs.values_list("id", "title"))
         return render(
             request, "issues.html", {
-                "form": form,
-                "project_id": project_id,
-                "issues": objs,
-                "pagination_html": pagination_html
+                "form":
+                form,
+                "project_id":
+                project_id,
+                "issues":
+                objs,
+                "pagination_html":
+                pagination_html,
+                "status_filter":
+                SelectFilter("status", Issues.status_choices, request),
+                "priority_filter":
+                SelectFilter("priority", Issues.priority_choices, request),
+                "issues_type_filter":
+                SelectFilter("issues_type", issues_type_datas, request),
             })
 
     def post(self, request: WSGIRequest, project_id: int):
@@ -445,7 +495,7 @@ class IssuesUpdateView(View):
 
     def post(self, request: WSGIRequest, project_id: int, issue_id: int):
         post_dict = json.loads(request.body.decode("utf-8"))
-        print(post_dict)
+
         name = post_dict.get("name")
         value = post_dict.get("value")
         instance: Issues = Issues.objects.filter(
@@ -618,7 +668,7 @@ class ReplyView(View):
 
     def post(self, request: WSGIRequest, project_id: int, issue_id: int):
         post_dict = request.POST.dict()
-        pprint(post_dict)
+
         IssuesReply.objects.create(reply_type=2,
                                    content=post_dict.get("content"),
                                    creator=request.tracer.user,
@@ -695,7 +745,7 @@ class MduploadView(View):
             "success": 1,
             "message": "success!",
             "url":
-                f"http://127.0.0.1:8000/project/1/wiki/mddownload/{file.name}/"
+            f"http://127.0.0.1:8000/project/1/wiki/mddownload/{file.name}/"
         }
         response = JsonResponse(res)
         # 设置此消息头 放行frame的跨域问题 markdown-editor要求的
