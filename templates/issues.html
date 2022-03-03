@@ -247,8 +247,13 @@
         $(function () {
             initMDE()
             submitIssues()
+            initDateTimePicker();
+            bindFilter()
         })
 
+        /**
+         * 提交issue到后台
+         */
         function submitIssues() {
             $("#submitIssues").click(function () {
                 console.log(1234)
@@ -272,6 +277,9 @@
             })
         }
 
+        /**
+         * 初始化MarkDown编辑器
+         */
         function initMDE() {
             // 打开模态框 shown.bs.modal 事件被触发
             $('#myModal').on('shown.bs.modal', function () {
@@ -288,29 +296,43 @@
             })
 
         }
-    </script>
 
-    <script type="text/javascript">
-        $('#id_start_date').datetimepicker({
-            forceParse: 0,//设置为0，时间不会跳转1899，会显示当前时间。
-            language: 'zh-CN',//显示中文
-            format: 'yyyy-mm-dd',//显示格式
-            minView: "month",//设置只显示到月份
-            initialDate: new Date(),//初始化当前日期
-            autoclose: true,//选中自动关闭
-            todayBtn: true//显示今日按钮
-        })
-        $("#id_start_date").datetimepicker("setDate", new Date());  //设置显示默认当天的时间
+        /**
+         * 初始化时间选择器插件
+         */
+        function initDateTimePicker() {
+            $('#id_start_date').datetimepicker({
+                forceParse: 0,//设置为0，时间不会跳转1899，会显示当前时间。
+                language: 'zh-CN',//显示中文
+                format: 'yyyy-mm-dd',//显示格式
+                minView: "month",//设置只显示到月份
+                initialDate: new Date(),//初始化当前日期
+                autoclose: true,//选中自动关闭
+                todayBtn: true//显示今日按钮
+            })
+            $("#id_start_date").datetimepicker("setDate", new Date());  //设置显示默认当天的时间
 
-        $('#id_end_date').datetimepicker({
-            forceParse: 0,//设置为0，时间不会跳转1899，会显示当前时间。
-            language: 'zh-CN',//显示中文
-            format: 'yyyy-mm-dd',//显示格式
-            minView: "month",//设置只显示到月份
-            initialDate: new Date(),//初始化当前日期
-            autoclose: true,//选中自动关闭
-            todayBtn: true//显示今日按钮
-        })
+            $('#id_end_date').datetimepicker({
+                forceParse: 0,//设置为0，时间不会跳转1899，会显示当前时间。
+                language: 'zh-CN',//显示中文
+                format: 'yyyy-mm-dd',//显示格式
+                minView: "month",//设置只显示到月份
+                initialDate: new Date(),//初始化当前日期
+                autoclose: true,//选中自动关闭
+                todayBtn: true//显示今日按钮
+            })
+        }
+
+        /**
+         * 为checkbox绑定点击事件
+         */
+        function bindFilter() {
+            $("#filter").find("input:checkbox").click(function () {
+                location.href = $(this).parent("a").attr("href")
+            })
+        }
+
+
     </script>
 
 {% endblock js %}
