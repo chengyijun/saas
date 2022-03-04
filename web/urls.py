@@ -19,6 +19,7 @@ from web import views
 
 app_name = "web"
 urlpatterns = [
+    # 以下不登陆就能访问
     path("", views.IndexView.as_view(), name="index"),
     path("index/", views.IndexView.as_view(), name="index"),
     path("register/", views.RegisterView.as_view(), name="register"),
@@ -27,6 +28,8 @@ urlpatterns = [
     path("code/", views.CodeView.as_view(), name="code"),
     # path("showcode/", views.ShowCodeView.as_view(), name="showcode"),
     path("login/", views.LoginView.as_view(), name="login"),
+
+    # 以下必须登陆才能访问
     path("logout/", views.LogoutView.as_view(), name="logout"),
     path("project/list/", views.ProjectListView.as_view(),
          name="project_list"),
@@ -81,4 +84,7 @@ urlpatterns = [
                  views.InviteView.as_view(),
                  name="invite"),
         ])),
+    path("join/project/<str:code>/",
+         views.JoinProjectView.as_view(),
+         name="join_project"),
 ]

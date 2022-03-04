@@ -4,6 +4,7 @@ import json
 from io import BytesIO
 from pathlib import Path
 from typing import Tuple
+from uuid import uuid4
 from wsgiref.util import FileWrapper
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -20,7 +21,7 @@ from django.views import View
 from web.forms import RegisterModelForm, SMSLoginForm, LoginForm, ProjectModelForm, WikiModelForm, \
     FileRepositoryModelForm, IssuesModelForm, InviteModelForm
 from web.models import Transaction, PricePolicy, Project, ProjectUser, Wiki, FileRepository, IssuesType, Issues, \
-    IssuesReply, UserInfo
+    IssuesReply, UserInfo, Invite
 from web.utils.func import send_sms, create_png, get_order
 from web.utils.pagination import Pagination
 
@@ -815,4 +816,54 @@ class MddownloadView(View):
 
 
 class InviteView(View):
-    pass
+    def post(self, request: WSGIRequest, project_id: int):
+        form = InviteModelForm(request, data=request.POST)
+        if not form.is_valid():
+            return JsonResponse({
+                "status": False,
+                "errors": form.errors
+            })
+        form.instance.project = request.tracer.current_project
+        code = str(uuid4())
+        form.instance.code = code
+        form.instance.creator = request.tracer.user
+        form.save()
+        uri = reverse('web:join_project', kwargs={'code': code})
+        invite_url = f"{request.scheme}://{request.get_host()}{uri}"
+        return JsonResponse({
+            "status": True,
+            "invite_url": invite_url
+        })
+
+
+class JoinProjectView(View):
+    def get(self, request: WSGIRequest, code: str):
+        # code 不合法
+        invite = Invite.objects.filter(code=code).first()
+        if not invite:
+            return render(request, "join_project.html", {"error": "邀请码不存在"})
+        # code 过期失效
+        max_datetime = invite.create_datetime + datetime.timedelta(minutes=invite.period)
+        now = datetime.datetime.now()
+        if max_datetime < now:
+            return render(request, "join_project.html", {"error": "邀请码已经过期"})
+        # 当前用户是创建者不需要加入
+        if invite.project.creator == request.tracer.user:
+            return render(request, "join_project.html", {"error": "您是该项目创建者 无需加入"})
+        # 当前用户已经加入过 不能重复加入
+        if ProjectUser.objects.filter(project=invite.project, user=request.tracer.user).exists():
+            return render(request, "join_project.html", {"error": "您已经加入了该项目 无需重复加入"})
+        # 项目成员 超过了 价格策略允许的最大成员数
+        if invite.project.join_count > request.tracer.policy.project_member:
+            return render(request, "join_project.html", {"error": "您已经加入了太多项目 需要升级套餐"})
+        # 设置了要求次数
+        if invite.count:
+            if invite.count <= invite.use_count:
+                # 已邀请人数 大于 设置的邀请次数
+                return render(request, "join_project.html", {"error": "邀请码 邀请次数超限"})
+        # use_count+=1
+        invite.use_count += 1
+        # 更新 ProjectUser表
+        ProjectUser.objects.create(project=invite.project, user=request.tracer.user)
+
+        return render(request, "join_project.html", {"error": None})
