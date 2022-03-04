@@ -76,5 +76,9 @@ urlpatterns = [
             path("wiki/mddownload/<str:filename>/",
                  views.MddownloadView.as_view(),
                  name="mddownload"),
+
+            path("invite/",
+                 views.InviteView.as_view(),
+                 name="invite"),
         ])),
 ]

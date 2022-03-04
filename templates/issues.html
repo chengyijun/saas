@@ -29,7 +29,9 @@
 
         .modal-dialog {
             width: 70%;
+
         }
+
 
         #filter a {
             margin-right: 10px;
@@ -87,7 +89,7 @@
             <div class="panel-body">
                 <div id="btn-group">
                     <button class="btn btn-primary" data-toggle="modal" data-target="#myModal">新建问题</button>
-                    <button class="btn btn-info">邀请成员</button>
+                    <button class="btn btn-info" data-toggle="modal" data-target="#inviteModal">邀请成员</button>
                 </div>
 
                 {% for issue in issues %}
@@ -114,7 +116,7 @@
     </div>
 
 
-    <!-- 模态框（Modal） -->
+    <!-- 模态框（创建问题） -->
     <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
          aria-hidden="true">
         <div class="modal-dialog">
@@ -239,6 +241,52 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
                     <button type="button" id="submitIssues" class="btn btn-primary">提交更改</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+
+    <!-- 模态框（邀请成员） -->
+    <div class="modal fade" id="inviteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">邀请成员</h4>
+                </div>
+                <div class="modal-body clearfix">
+
+                    {% for field in invite_form %}
+                        <div class="form-group clearfix">
+                            <label for="{{ field.id_for_label }}"
+                                   class="col-sm-2 control-label">{{ field.label }}</label>
+                            <div class="col-sm-10">
+                                {{ field }}
+                                <div class="error"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary">生成邀请链接</button>
+                </div>
+
+                <div class="form-group hide">
+                    <div class="col-lg-6">
+                        <div class="input-group">
+                            <span class="input-group-btn">
+                            <button class="btn btn-default" type="button">邀请链接</button>
+                        </span>
+                            <input type="text" class="form-control">
+                            <span class="input-group-btn">
+                            <button class="btn btn-info" type="button">复制</button>
+                        </span>
+                        </div><!-- /input-group -->
+                    </div><!-- /.col-lg-6 -->
                 </div>
             </div><!-- /.modal-content -->
         </div><!-- /.modal -->

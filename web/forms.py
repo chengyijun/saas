@@ -5,7 +5,7 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.db.models import QuerySet
 from django.forms import RadioSelect
 
-from web.models import UserInfo, Project, Wiki, FileRepository, Issues
+from web.models import UserInfo, Project, Wiki, FileRepository, Issues, Invite
 from web.utils.func import encrypt
 
 
@@ -217,3 +217,9 @@ class IssuesModelForm(BootstrapStyle, forms.ModelForm):
         exclude = [
             "project", "creator", "create_datetime", "last_update_datetime"
         ]
+
+
+class InviteModelForm(BootstrapStyle, forms.ModelForm):
+    class Meta:
+        model = Invite
+        fields = ["period", "count"]

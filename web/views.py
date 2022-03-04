@@ -18,7 +18,7 @@ from django.utils.safestring import mark_safe
 from django.views import View
 
 from web.forms import RegisterModelForm, SMSLoginForm, LoginForm, ProjectModelForm, WikiModelForm, \
-    FileRepositoryModelForm, IssuesModelForm
+    FileRepositoryModelForm, IssuesModelForm, InviteModelForm
 from web.models import Transaction, PricePolicy, Project, ProjectUser, Wiki, FileRepository, IssuesType, Issues, \
     IssuesReply, UserInfo
 from web.utils.func import send_sms, create_png, get_order
@@ -495,6 +495,9 @@ class IssuesView(View):
             assign_datas.extend(list(set(joins.values_list("user_id", "user__username"))))
         assign_datas.remove((None, None))
 
+        # 创建邀请的表单
+        invite_form = InviteModelForm(request)
+
         return render(
             request, "issues.html", {
                 "form":
@@ -515,6 +518,7 @@ class IssuesView(View):
                     SelectFilter2("assign", assign_datas, request),
                 "attention_filter":
                     SelectFilter2("attention", assign_datas, request),
+                "invite_form": invite_form,
             })
 
     def post(self, request: WSGIRequest, project_id: int):
@@ -808,3 +812,7 @@ class MddownloadView(View):
     def get(self, request: WSGIRequest, project_id: int, filename: str):
         target_file = Path("uploads").resolve().joinpath(filename)
         return FileResponse(FileWrapper(open(target_file, "rb")))
+
+
+class InviteView(View):
+    pass

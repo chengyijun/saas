@@ -285,6 +285,22 @@ class IssuesReply(models.Model):
                                            auto_now_add=True)
 
 
+class Invite(models.Model):
+    project = models.ForeignKey(verbose_name="项目", to=Project, on_delete=models.CASCADE)
+    code = models.CharField(verbose_name="邀请码", max_length=64, unique=True)
+    count = models.PositiveIntegerField(verbose_name="限制数量", null=True, blank=True, help_text="空表示无数量限制")
+    use_count = models.PositiveIntegerField(verbose_name="已邀请数量", default=0)
+    period_choices = (
+        (30, "30分钟"),
+        (60, "1小时"),
+        (300, "5小时"),
+        (1440, "24小时"),
+    )
+    period = models.IntegerField(verbose_name="有效期", choices=period_choices, default=1440)
+    create_datetime = models.DateTimeField(verbose_name="创建时间", auto_now_add=True)
+    creator = models.ForeignKey(verbose_name="创建者", to=UserInfo, on_delete=models.CASCADE)
+
+
 # 注册模型类 让django自带的后台可以进行管理
 admin.site.register([
     UserInfo, PricePolicy, Transaction, Project, ProjectUser, Wiki,
