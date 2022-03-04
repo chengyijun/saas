@@ -40,6 +40,7 @@
     <link rel="stylesheet" href="{% static 'plugin/editor-md/css/editormd.css' %}">
     <link rel="stylesheet" href="{% static 'plugin/bootstrap-datetimepicker/css/bootstrap-datetimepicker.css' %}">
     <link rel="stylesheet" href="{% static 'plugin/bootstrap-select/dist/css/bootstrap-select.css' %}">
+    <link rel="stylesheet" href="{% static 'plugin/select2/dist/css/select2.css' %}">
 {% endblock css %}
 
 
@@ -62,6 +63,14 @@
                 {% endfor %}
                 <hr>
                 {% for foo in issues_type_filter %}
+                    {{ foo }}
+                {% endfor %}
+                <hr>
+                {% for foo in assign_filter %}
+                    {{ foo }}
+                {% endfor %}
+                <hr>
+                {% for foo in attention_filter %}
                     {{ foo }}
                 {% endfor %}
             </div>
@@ -243,12 +252,15 @@
     <script src="{% static 'plugin/bootstrap-datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js' %}"></script>
     <script src="{% static 'plugin/bootstrap-select/dist/js/bootstrap-select.js' %}"></script>
     <script src="{% static 'plugin/bootstrap-select/dist/js/i18n/defaults-zh_CN.js' %}"></script>
+    <script src="{% static 'plugin/select2/dist/js/select2.full.js' %}"></script>
+    <script src="{% static 'plugin/select2/dist/js/i18n/zh-CN.js' %}"></script>
     <script>
         $(function () {
             initMDE()
             submitIssues()
             initDateTimePicker();
             bindFilter()
+            initSelect2()
         })
 
         /**
@@ -332,6 +344,16 @@
             })
         }
 
+
+        function initSelect2() {
+            $(".c1").select2().on("select2:select", function (e) {
+                console.log("选中了", e.params.data.id)
+                location.href = e.params.data.id
+            }).on("select2:unselect", function (e) {
+                //console.log("未选中", e.params.date)
+                location.href = e.params.data.id
+            })
+        }
 
     </script>
 

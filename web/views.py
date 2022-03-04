@@ -383,10 +383,45 @@ class FileDownloadView(View):
                 response['Content-Length'] = file_path.stat().st_size
                 response[
                     'Content-Disposition'] = 'attachment; filename=' + escape_uri_path(
-                        file.name)
+                    file.name)
                 return response
             except Exception:
                 raise Http404
+
+
+class SelectFilter2:
+
+    def __init__(self, name: str, datas: Tuple, request: WSGIRequest):
+        self.name = name
+        self.datas = datas
+        self.request = request
+
+    def __iter__(self):
+        selected_datas = self.request.GET.getlist(self.name)
+
+        yield mark_safe('<select class="c1" multiple="multiple" style="width:100%;">')
+
+        for k, v in self.datas:
+            selected = ""
+            if str(k) in selected_datas:
+                selected = "selected"
+                try:
+                    selected_datas.remove(str(k))
+                except:
+                    pass
+            else:
+                selected_datas.append(str(k))
+            target_dict = self.request.GET.copy()
+            target_dict._mutable = True
+            target_dict.setlist(self.name, selected_datas)
+            url = f"{self.request.path_info}?{target_dict.urlencode()}"
+
+            yield mark_safe(f'<option {selected} value="{url}">{v}</option>')
+            try:
+                selected_datas.remove(str(k))
+            except:
+                pass
+        yield mark_safe('</select>')
 
 
 class SelectFilter:
@@ -400,16 +435,18 @@ class SelectFilter:
         for k, v in self.datas:
             checked = ""
             selected_datas = self.request.GET.getlist(self.name)
-            target_dict = self.request.GET.copy()
 
             if str(k) in selected_datas:
                 checked = "checked"
                 selected_datas.remove(str(k))
             else:
                 selected_datas.append(str(k))
+
+            target_dict = self.request.GET.copy()
             target_dict._mutable = True
             target_dict.setlist(self.name, selected_datas)
             url = f"{self.request.path_info}?{target_dict.urlencode()}"
+
             yield mark_safe(
                 f'<a id="id_{k}" href="{url}"><input  type="checkbox" {checked}/><label for="id_{k}">{v}</label></a>'
             )
@@ -423,7 +460,7 @@ class IssuesView(View):
         # 查询出所有issues
         # 允许的查询参数
         query_dict = {}
-        allowed_params = ["issues_type", "status", "priority"]
+        allowed_params = ["issues_type", "status", "priority", "assign", "attention"]
         for allowed_param in allowed_params:
             getlist = request.GET.getlist(allowed_param)
             if getlist:
@@ -449,22 +486,35 @@ class IssuesView(View):
         issues_type_objs: QuerySet = IssuesType.objects.filter(
             project_id=project_id).all()
         issues_type_datas = tuple(issues_type_objs.values_list("id", "title"))
+
+        # 构造 assign filter 的数据
+        issues: QuerySet = Issues.objects.filter(project_id=project_id)
+        assign_datas = list(set(issues.values_list("assign__id", "assign__username")))
+        joins = ProjectUser.objects.filter(project_id=project_id)
+        if joins:
+            assign_datas.extend(list(set(joins.values_list("user_id", "user__username"))))
+        assign_datas.remove((None, None))
+
         return render(
             request, "issues.html", {
                 "form":
-                form,
+                    form,
                 "project_id":
-                project_id,
+                    project_id,
                 "issues":
-                objs,
+                    objs,
                 "pagination_html":
-                pagination_html,
+                    pagination_html,
                 "status_filter":
-                SelectFilter("status", Issues.status_choices, request),
+                    SelectFilter("status", Issues.status_choices, request),
                 "priority_filter":
-                SelectFilter("priority", Issues.priority_choices, request),
+                    SelectFilter("priority", Issues.priority_choices, request),
                 "issues_type_filter":
-                SelectFilter("issues_type", issues_type_datas, request),
+                    SelectFilter("issues_type", issues_type_datas, request),
+                "assign_filter":
+                    SelectFilter2("assign", assign_datas, request),
+                "attention_filter":
+                    SelectFilter2("attention", assign_datas, request),
             })
 
     def post(self, request: WSGIRequest, project_id: int):
@@ -745,7 +795,7 @@ class MduploadView(View):
             "success": 1,
             "message": "success!",
             "url":
-            f"http://127.0.0.1:8000/project/1/wiki/mddownload/{file.name}/"
+                f"http://127.0.0.1:8000/project/1/wiki/mddownload/{file.name}/"
         }
         response = JsonResponse(res)
         # 设置此消息头 放行frame的跨域问题 markdown-editor要求的
