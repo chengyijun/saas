@@ -854,16 +854,29 @@ class JoinProjectView(View):
         if ProjectUser.objects.filter(project=invite.project, user=request.tracer.user).exists():
             return render(request, "join_project.html", {"error": "您已经加入了该项目 无需重复加入"})
         # 项目成员 超过了 价格策略允许的最大成员数
-        if invite.project.join_count > request.tracer.policy.project_member:
-            return render(request, "join_project.html", {"error": "您已经加入了太多项目 需要升级套餐"})
+        creator = invite.project.creator
+        transaction = Transaction.objects.filter(user=creator).order_by("-id").first()
+        allow_member = transaction.price_policy.project_member
+        if invite.project.join_count > allow_member:
+            return render(request, "join_project.html", {"error": "项目允许人数已达上限"})
         # 设置了要求次数
         if invite.count:
             if invite.count <= invite.use_count:
                 # 已邀请人数 大于 设置的邀请次数
                 return render(request, "join_project.html", {"error": "邀请码 邀请次数超限"})
         # use_count+=1
+        # 更新邀请表的 已邀请人数
         invite.use_count += 1
+        invite.save()
         # 更新 ProjectUser表
         ProjectUser.objects.create(project=invite.project, user=request.tracer.user)
+        # 更新项目参与人数
+        invite.project.join_count += 1
+        invite.project.save()
 
         return render(request, "join_project.html", {"error": None})
+
+
+class DashboardView(View):
+    def get(self, request: WSGIRequest, project_id: int):
+        return render(request, "dashboard.html", {})

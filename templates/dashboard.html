@@ -1,0 +1,148 @@
+{% extends "layout/manage.html" %}
+{% load static %}
+
+{% block title %}
+    概览
+{% endblock %}
+
+
+{% block css %}
+
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="col-md-8">
+            <div class="panel panel-default ">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        新增问题趋势
+                    </h3>
+                </div>
+                <div class="panel-body" style="min-height: 200px;">
+
+                    <div id="charts"></div>
+                </div>
+            </div>
+
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">
+                                问题
+                            </h3>
+                        </div>
+                        <div class="panel-body">
+                            面板内容
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">
+                                项目成员
+                            </h3>
+                        </div>
+                        <div class="panel-body">
+                            面板内容
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        详细
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    面板内容
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        动态
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    面板内容
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'plugin/highcharts/highcharts.js' %}"></script>
+    <script>
+        $(function () {
+            initCharts()
+        })
+
+        function initCharts() {
+            var chart = Highcharts.chart('charts', {
+                title: {
+                    text: null
+                },
+                subtitle: {
+                    text: null
+                },
+                credits: {
+                    enabled: false
+                },
+                legend: {
+                    enable: false
+                },
+                yAxis: {
+                    title: {
+                        text: '问题数'
+                    }
+                },
+                xAxis: {
+                    type: "datetime",
+                    tickInterval: 60 * 60 * 24 * 1000,
+                    labels: {
+                        formatter: function () {
+                            return Highcharts.dateFormat("%m-%d", this.value)
+                        },
+                        rotate: -30
+                    }
+                },
+                tooltip: {
+                    headerFormat: '<b>{point.key}</b><br>',
+                    pointFormat: '<span style="color:{series.color}">\u25CF</span>数量：{point.y}'
+                },
+                plotOptions: {
+                    area: {
+                        stacking: "normal",
+                        lineColor: "#666",
+                        lineWidth: 1,
+                        marker: {
+                            lineColor: "#666",
+                            lineWidth: 1,
+                        }
+                    }
+                },
+                series: [{
+                    name: '每天bug数量',
+                    data: [
+                        [1646473702896, 12],
+                        [1646560901639, 33],
+                        [1646647301639, 7],
+                    ]
+                }],
+
+
+            });
+        }
+    </script>
+{% endblock %}

@@ -83,6 +83,10 @@ urlpatterns = [
             path("invite/",
                  views.InviteView.as_view(),
                  name="invite"),
+
+            path("dashboard/",
+                 views.DashboardView.as_view(),
+                 name="dashboard"),
         ])),
     path("join/project/<str:code>/",
          views.JoinProjectView.as_view(),
