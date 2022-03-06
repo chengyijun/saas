@@ -9,7 +9,7 @@ from wsgiref.util import FileWrapper
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.handlers.wsgi import WSGIRequest
-from django.db.models import QuerySet, Field
+from django.db.models import QuerySet, Field, Count
 from django.forms import model_to_dict
 from django.http import JsonResponse, HttpResponse, FileResponse, Http404
 from django.shortcuts import render, redirect
@@ -879,4 +879,32 @@ class JoinProjectView(View):
 
 class DashboardView(View):
     def get(self, request: WSGIRequest, project_id: int):
-        return render(request, "dashboard.html", {})
+        return render(request, "dashboard.html", {
+            "project_id": project_id
+        })
+
+
+class DashboardChartsView(View):
+    def get(self, request: WSGIRequest, project_id: int):
+        now = datetime.datetime.now()
+        target_dict = {}
+        for i in range(0, 30):
+            tmp_date_raw = now - datetime.timedelta(days=i)
+            tmp_date_ts = int(tmp_date_raw.timestamp() * 1000)
+            tmp_date_date = tmp_date_raw.date().strftime("%Y-%m-%d")
+            target_dict.update({
+                tmp_date_date: [tmp_date_ts, 0]
+            })
+        past30 = now - datetime.timedelta(days=30)
+        datas = Issues.objects.filter(create_datetime__gte=past30).extra(
+            select={"ctime": "DATE_FORMAT(web_issues.create_datetime,'%%Y-%%m-%%d')"}).values("ctime").annotate(
+            ct=Count("id"))
+        # print(datas)
+        # <QuerySet [{'ctime': '2022-03-02', 'ct': 1}, {'ctime': '2022-03-06', 'ct': 1}]>
+        for data in datas:
+            target_dict[data["ctime"]][1] = data["ct"]
+
+        return JsonResponse({
+            "status": True,
+            "data": list(target_dict.values())
+        })

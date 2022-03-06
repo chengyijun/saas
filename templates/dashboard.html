@@ -89,7 +89,7 @@
         })
 
         function initCharts() {
-            var chart = Highcharts.chart('charts', {
+            let config = {
                 title: {
                     text: null
                 },
@@ -105,7 +105,8 @@
                 yAxis: {
                     title: {
                         text: '问题数'
-                    }
+                    },
+                    tickInterval: 1,
                 },
                 xAxis: {
                     type: "datetime",
@@ -134,15 +135,30 @@
                 },
                 series: [{
                     name: '每天bug数量',
-                    data: [
-                        [1646473702896, 12],
-                        [1646560901639, 33],
-                        [1646647301639, 7],
-                    ]
+                    data: []
                 }],
 
 
-            });
+            }
+
+            $.ajax({
+                url: "{% url 'web:dashboard_charts' project_id=project_id %}",
+                type: "get",
+                dataType: "json",
+                success: function (res) {
+                    console.log(res)
+                    if (res.status) {
+                        config.series[0].data = res.data
+
+
+                        const chart = Highcharts.chart('charts', config);
+                    } else {
+
+                    }
+                }
+            })
+
+
         }
     </script>
 {% endblock %}
