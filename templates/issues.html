@@ -49,70 +49,75 @@
 {% block content %}
     <div class="container-fluid">
 
-        <div class="panel panel-default col-md-3">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="fa fa-search" aria-hidden="true"></i> 筛选
-                </h3>
-            </div>
-            <div class="panel-body" id="filter">
-                {% for foo in status_filter %}
-                    {{ foo }}
-                {% endfor %}
-                <hr>
-                {% for foo in priority_filter %}
-                    {{ foo }}
-                {% endfor %}
-                <hr>
-                {% for foo in issues_type_filter %}
-                    {{ foo }}
-                {% endfor %}
-                <hr>
-                {% for foo in assign_filter %}
-                    {{ foo }}
-                {% endfor %}
-                <hr>
-                {% for foo in attention_filter %}
-                    {{ foo }}
-                {% endfor %}
+        <div class="col-md-3">
+            <div class="panel panel-default ">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-search" aria-hidden="true"></i> 筛选
+                    </h3>
+                </div>
+                <div class="panel-body" id="filter">
+                    {% for foo in status_filter %}
+                        {{ foo }}
+                    {% endfor %}
+                    <hr>
+                    {% for foo in priority_filter %}
+                        {{ foo }}
+                    {% endfor %}
+                    <hr>
+                    {% for foo in issues_type_filter %}
+                        {{ foo }}
+                    {% endfor %}
+                    <hr>
+                    {% for foo in assign_filter %}
+                        {{ foo }}
+                    {% endfor %}
+                    <hr>
+                    {% for foo in attention_filter %}
+                        {{ foo }}
+                    {% endfor %}
+                </div>
             </div>
         </div>
 
-        <div class="panel panel-default col-md-9">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="fa fa-question-circle" aria-hidden="true"></i> 问题
-                </h3>
-            </div>
-
-
-            <div class="panel-body">
-                <div id="btn-group">
-                    <button class="btn btn-primary" data-toggle="modal" data-target="#myModal">新建问题</button>
-                    <button class="btn btn-info" data-toggle="modal" data-target="#inviteModal">邀请成员</button>
+        <div class="col-md-9">
+            <div class="panel panel-default xx">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-question-circle" aria-hidden="true"></i> 问题
+                    </h3>
                 </div>
 
-                {% for issue in issues %}
-                    <dl>
-                        <dt>
-                            <a href="{% url 'web:issues_detail' project_id=project_id issue_id=issue.id %}">
-                                {% get_id_just issue.id %}
-                            </a>
-                            <a href="{% url 'web:issues_detail' project_id=project_id issue_id=issue.id %}">
-                                {{ issue.subject }}
-                            </a>
-                        </dt>
-                        <dd>{{ issue.issues_type }} {{ issue.get_status_display }} {{ issue.creator }} {{ issue.create_datetime }}</dd>
-                    </dl>
-                {% endfor %}
 
-                <ul class="pagination">
-                    {{ pagination_html|safe }}
-                </ul>
+                <div class="panel-body">
+                    <div id="btn-group">
+                        <button class="btn btn-primary" data-toggle="modal" data-target="#myModal">新建问题</button>
+                        <button class="btn btn-info" data-toggle="modal" data-target="#inviteModal">邀请成员</button>
+                    </div>
+
+                    {% for issue in issues %}
+                        <dl>
+                            <dt>
+                                <a href="{% url 'web:issues_detail' project_id=project_id issue_id=issue.id %}">
+                                    {% get_id_just issue.id %}
+                                </a>
+                                <a href="{% url 'web:issues_detail' project_id=project_id issue_id=issue.id %}">
+                                    {{ issue.subject }}
+                                </a>
+                            </dt>
+                            <dd>{{ issue.issues_type }} {{ issue.get_status_display }} {{ issue.creator }} {{ issue.create_datetime }}</dd>
+                        </dl>
+                    {% endfor %}
+
+                    <ul class="pagination">
+                        {{ pagination_html|safe }}
+                    </ul>
 
 
+                </div>
             </div>
         </div>
+
     </div>
 
 
