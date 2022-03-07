@@ -983,3 +983,24 @@ class StatisticsView(View):
             "project_id": project_id,
         }
         return render(request, "statistics.html", context=context)
+
+
+class StatisticsChart1View(View):
+    def get(self, request: WSGIRequest, project_id: int):
+        ds = Issues.objects.filter(project_id=project_id).values("priority").annotate(d=Count("id"))
+        target = {}
+        for k, v in Issues.priority_choices:
+            target.update({k: {"name": v, "y": 0}})
+        for d in ds:
+            target[d.get("priority")]["y"] = d.get("d")
+        # print(list(target.values()))
+
+        datas = list(target.values())
+        datas[0].update({
+            "sliced": True,
+            "selected": True
+        })
+        return JsonResponse({
+            "status": True,
+            "datas": datas
+        })

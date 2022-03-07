@@ -85,7 +85,7 @@
         }
 
         function initCharts() {
-            Highcharts.chart('rc', {
+            let config = {
                 chart: {
                     plotBackgroundColor: null,
                     plotBorderWidth: null,
@@ -93,7 +93,7 @@
                     type: 'pie'
                 },
                 title: {
-                    text: '2018年1月浏览器市场份额'
+                    text: '各级问题占比'
                 },
                 tooltip: {
                     pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
@@ -114,40 +114,28 @@
                 series: [{
                     name: 'Brands',
                     colorByPoint: true,
-                    data: [{
-                        name: 'Chrome',
-                        y: 61.41,
-                        sliced: true,
-                        selected: true
-                    }, {
-                        name: 'Internet Explorer',
-                        y: 11.84
-                    }, {
-                        name: 'Firefox',
-                        y: 10.85
-                    }, {
-                        name: 'Edge',
-                        y: 4.67
-                    }, {
-                        name: 'Safari',
-                        y: 4.18
-                    }, {
-                        name: 'Sogou Explorer',
-                        y: 1.64
-                    }, {
-                        name: 'Opera',
-                        y: 1.6
-                    }, {
-                        name: 'QQ',
-                        y: 1.2
-                    }, {
-                        name: 'Other',
-                        y: 2.61
-                    }]
+                    data: []
                 }]
-            });
+            };
+            getchart1(config)
 
+        }
 
+        function getchart1(config) {
+            $.ajax({
+                url: "{% url 'web:statistics_chart1' project_id=project_id %}",
+                type: "get",
+                dataType: "json",
+                success: function (res) {
+                    console.log(res)
+                    if (res.status) {
+                        config.series[0].data = res.datas
+                        Highcharts.chart('rc', config);
+                    } else {
+
+                    }
+                }
+            })
         }
     </script>
 {% endblock %}

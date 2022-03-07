@@ -94,6 +94,10 @@ urlpatterns = [
             path("statistics/",
                  views.StatisticsView.as_view(),
                  name="statistics"),
+
+            path("statistics/chart1/",
+                 views.StatisticsChart1View.as_view(),
+                 name="statistics_chart1"),
         ])),
     path("join/project/<str:code>/",
          views.JoinProjectView.as_view(),
