@@ -3,13 +3,13 @@ import datetime
 import json
 from io import BytesIO
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, List, Dict
 from uuid import uuid4
 from wsgiref.util import FileWrapper
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.handlers.wsgi import WSGIRequest
-from django.db.models import QuerySet, Field, Count
+from django.db.models import QuerySet, Field, Count, Sum
 from django.forms import model_to_dict
 from django.http import JsonResponse, HttpResponse, FileResponse, Http404
 from django.shortcuts import render, redirect
@@ -323,6 +323,10 @@ class FileView(View):
 
         # 将文件信息写入数据库
         FileRepository.objects.create(**data)
+
+        # 更新项目的已使用容量
+        request.tracer.current_project.user_space += target_file.stat().st_size
+        request.tracer.current_project.save()
         return JsonResponse({"status": True})
 
 
@@ -362,6 +366,12 @@ class FileDeleteView(View):
                 Path(f"uploads/{file.name}").unlink(missing_ok=True)
             # 删除文件 数据库记录
             file.delete()
+
+            # 删除文件后 重新计算用户所使用的项目空间
+            res = FileRepository.objects.filter(project_id=project_id).aggregate(user_space=Sum("file_size"))
+            current_project = request.tracer.current_project
+            current_project.user_space = res.get("user_space")
+            current_project.save()
             return redirect(
                 reverse("web:file",
                         kwargs={
@@ -879,9 +889,66 @@ class JoinProjectView(View):
 
 class DashboardView(View):
     def get(self, request: WSGIRequest, project_id: int):
+        questions = self.get_question_data(project_id)
+        users = self.get_user_data(project_id, request)
+        project: Project = Project.objects.filter(id=project_id).first()
+
+        dynamic_datas = self.get_dynamic_datas(project_id)
+
         return render(request, "dashboard.html", {
-            "project_id": project_id
+            "project_id": project_id,
+            "questions": questions,
+            "users": users,
+            "project": project,
+            "dynamic_datas": dynamic_datas,
         })
+
+    def get_dynamic_datas(self, project_id):
+        issues: QuerySet = Issues.objects.filter(project_id=project_id)[:10]
+        dynamic_datas = []
+        for issue in issues:
+            if issue.assign:
+                dynamic_datas.append(issue)
+        return dynamic_datas
+
+    @staticmethod
+    def get_user_data(project_id: int, request: WSGIRequest) -> Dict:
+        """
+        获取 用户面板 所需数据
+        :param project_id:
+        :param request:
+        :return:
+        """
+        users = {
+            "creator": request.tracer.current_project.creator,
+            "join_users": []
+        }
+        pus = ProjectUser.objects.filter(project_id=project_id).all()
+        for pu in pus:
+            users.get("join_users").append(pu.user)
+        return users
+
+    @staticmethod
+    def get_question_data(project_id: int) -> List[Dict[str, int]]:
+        """
+        构造问题面板所需数据
+        :param project_id:
+        :return:
+        """
+        res = Issues.objects.filter(project_id=project_id).values("status").annotate(st=Count("id"))
+        # print(res)
+        target = {
+            1: {"name": "新建", "value": 0},
+            2: {"name": "处理中", "value": 0},
+            3: {"name": "已解决", "value": 0},
+            4: {"name": "已忽略", "value": 0},
+            5: {"name": "待反馈", "value": 0},
+            6: {"name": "已关闭", "value": 0},
+            7: {"name": "重新打开", "value": 0},
+        }
+        for r in res:
+            target[r.get("status")]["value"] = r.get("st")
+        return list(target.values())
 
 
 class DashboardChartsView(View):
@@ -896,7 +963,7 @@ class DashboardChartsView(View):
                 tmp_date_date: [tmp_date_ts, 0]
             })
         past30 = now - datetime.timedelta(days=30)
-        datas = Issues.objects.filter(create_datetime__gte=past30).extra(
+        datas = Issues.objects.filter(project_id=project_id, create_datetime__gte=past30).extra(
             select={"ctime": "DATE_FORMAT(web_issues.create_datetime,'%%Y-%%m-%%d')"}).values("ctime").annotate(
             ct=Count("id"))
         # print(datas)

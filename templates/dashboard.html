@@ -1,5 +1,7 @@
 {% extends "layout/manage.html" %}
 {% load static %}
+{% load dashboard %}
+{% load issue %}
 
 {% block title %}
     概览
@@ -7,7 +9,51 @@
 
 
 {% block css %}
+    <style>
+        #questions {
+            display: flex;
+            justify-content: flex-start;
+            flex-direction: row;
+            flex-wrap: wrap;
 
+            text-align: center;
+
+        }
+
+        #questions dl {
+            width: 25%;
+        }
+
+        #questions dt {
+
+        }
+
+        #questions dd {
+            font-size: 24px;
+        }
+
+        #users {
+
+        }
+
+        #users dl {
+            width: 50px;
+            text-align: center;
+            margin-right: 20px;
+        }
+
+        #users dt {
+            height: 50px;
+            border-radius: 50%;
+
+            line-height: 50px;
+            background-color: cyan;
+        }
+
+        #users #join_users {
+            display: flex;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -16,7 +62,7 @@
             <div class="panel panel-default ">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        新增问题趋势
+                        <i class="fa fa-area-chart" aria-hidden="true"></i> 新增问题趋势
                     </h3>
                 </div>
                 <div class="panel-body" style="min-height: 200px;">
@@ -31,11 +77,17 @@
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             <h3 class="panel-title">
-                                问题
+                                <i class="fa fa-question" aria-hidden="true"></i> 问题
                             </h3>
                         </div>
-                        <div class="panel-body">
-                            面板内容
+                        <div class="panel-body" id="questions">
+                            {% for foo in questions %}
+                                <dl>
+                                    <dt>{{ foo.name }}</dt>
+                                    <dd>{{ foo.value }}</dd>
+                                </dl>
+                            {% endfor %}
+
                         </div>
                     </div>
                 </div>
@@ -43,11 +95,22 @@
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             <h3 class="panel-title">
-                                项目成员
+                                <i class="fa fa-users" aria-hidden="true"></i> 项目成员
                             </h3>
                         </div>
-                        <div class="panel-body">
-                            面板内容
+                        <div class="panel-body" id="users">
+                            <dl>
+                                <dt>{{ users.creator.username.0|upper }}</dt>
+                                <dd>{{ users.creator.username }}</dd>
+                            </dl>
+
+                            <div id="join_users">{% for foo in users.join_users %}
+                                <dl>
+                                    <dt>{{ foo.username.0|upper }}</dt>
+                                    <dd>{{ foo.username }}</dd>
+                                </dl>
+                            {% endfor %}</div>
+
                         </div>
                     </div>
                 </div>
@@ -57,22 +120,49 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        详细
+                        <i class="fa fa-info-circle" aria-hidden="true"></i> 详细
                     </h3>
                 </div>
                 <div class="panel-body">
-                    面板内容
+                    <table class="table">
+                        <tr>
+                            <td>项目名称</td>
+                            <td>{{ project.name }}</td>
+                        </tr>
+
+                        <tr>
+                            <td>项目描述</td>
+                            <td>{{ project.desc | default:'' }}</td>
+                        </tr>
+
+                        <tr>
+                            <td>创建时间</td>
+                            <td>{{ project.create_time }}</td>
+                        </tr>
+
+                        <tr>
+                            <td>项目空间</td>
+                            <td>{% show_project_user_space project.user_space %}</td>
+                        </tr>
+                    </table>
                 </div>
             </div>
 
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        动态
+                        <i class="fa fa-bullseye" aria-hidden="true"></i> 动态
                     </h3>
                 </div>
                 <div class="panel-body">
-                    面板内容
+                    {% for foo in dynamic_datas %}
+
+                        <a href="{% url 'web:issues_detail' project_id=project_id issue_id=foo.id %}">{% get_id_just foo.id %}</a>
+                        <a href="{% url 'web:issues_detail' project_id=project_id issue_id=foo.id %}">{{ foo.subject }}</a>
+                        指派给
+                        {{ foo.assign }}
+                    {% endfor %}
+
                 </div>
             </div>
         </div>
@@ -120,7 +210,8 @@
                 },
                 tooltip: {
                     headerFormat: '<b>{point.key}</b><br>',
-                    pointFormat: '<span style="color:{series.color}">\u25CF</span>数量：{point.y}'
+                    pointFormat: '<span style="color:{series.color}">\u25CF</span>数量：{point.y}',
+                    xDateFormat: "%Y-%m-%d"
                 },
                 plotOptions: {
                     area: {

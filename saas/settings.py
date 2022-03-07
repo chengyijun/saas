@@ -73,6 +73,7 @@ TEMPLATES = [
             "libraries": {
                 "project": 'web.templatetags.project',
                 "issue": 'web.templatetags.issue',
+                "dashboard": 'web.templatetags.dashboard',
             }
         },
     },
