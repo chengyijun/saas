@@ -90,6 +90,10 @@ urlpatterns = [
             path("dashboard/charts/",
                  views.DashboardChartsView.as_view(),
                  name="dashboard_charts"),
+
+            path("statistics/",
+                 views.StatisticsView.as_view(),
+                 name="statistics"),
         ])),
     path("join/project/<str:code>/",
          views.JoinProjectView.as_view(),

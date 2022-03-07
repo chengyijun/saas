@@ -53,6 +53,10 @@
         #users #join_users {
             display: flex;
         }
+
+        .dynamic {
+            margin-top: 10px;
+        }
     </style>
 {% endblock %}
 
@@ -157,10 +161,12 @@
                 <div class="panel-body">
                     {% for foo in dynamic_datas %}
 
-                        <a href="{% url 'web:issues_detail' project_id=project_id issue_id=foo.id %}">{% get_id_just foo.id %}</a>
-                        <a href="{% url 'web:issues_detail' project_id=project_id issue_id=foo.id %}">{{ foo.subject }}</a>
-                        指派给
-                        {{ foo.assign }}
+                        <div class="dynamic">
+                            <a href="{% url 'web:issues_detail' project_id=project_id issue_id=foo.id %}">{% get_id_just foo.id %}</a>
+                            <a href="{% url 'web:issues_detail' project_id=project_id issue_id=foo.id %}">{{ foo.subject }}</a>
+                            指派给
+                            {{ foo.assign }}
+                        </div>
                     {% endfor %}
 
                 </div>

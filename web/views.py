@@ -975,3 +975,11 @@ class DashboardChartsView(View):
             "status": True,
             "data": list(target_dict.values())
         })
+
+
+class StatisticsView(View):
+    def get(self, request: WSGIRequest, project_id: int):
+        context = {
+            "project_id": project_id,
+        }
+        return render(request, "statistics.html", context=context)

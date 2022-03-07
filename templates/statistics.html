@@ -1,0 +1,153 @@
+{% extends "layout/manage.html" %}
+{% load static %}
+
+
+{% block title %}
+    概览
+{% endblock %}
+
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugin/daterangepicker/daterangepicker.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="input-group">
+                    <span class="input-group-addon" id="basic-addon1">日期范围</span>
+                    <input type="text" id="dtp" class="form-control" placeholder="Username"
+                           aria-describedby="basic-addon1">
+                </div>
+            </div>
+            <div class="col-md-9">
+
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-8">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            人员工作进度
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        面板内容
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            优先级统计
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <div id="rc" style="min-width:400px;height:400px"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'plugin/highcharts/highcharts.js' %}"></script>
+    <script src="{% static 'plugin/daterangepicker/moment.min.js' %}"></script>
+    <script src="{% static 'plugin/daterangepicker/daterangepicker.js' %}"></script>
+    <script>
+        $(function () {
+            initDateTimePicker()
+            initCharts()
+        })
+
+        function initDateTimePicker() {
+            let options = {
+                maxDate: moment(),
+                alwaysShowCalendars: true,
+                showWeekNumbers: true,
+                ranges: {
+                    '今天': [moment(), moment()],
+                    '昨天': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    '最近7天': [moment().subtract(6, 'days'), moment()],
+                    '最近30天': [moment().subtract(29, 'days'), moment()],
+                    '本月': [moment().startOf('month'), moment().endOf('month')],
+                },
+
+            }
+            $("#dtp").daterangepicker(options, function (start, end) {
+                console.log(start.format("YYYY-MM-DD"), end.add(1, "days").format("YYYY-MM-DD"))
+            });
+        }
+
+        function initCharts() {
+            Highcharts.chart('rc', {
+                chart: {
+                    plotBackgroundColor: null,
+                    plotBorderWidth: null,
+                    plotShadow: false,
+                    type: 'pie'
+                },
+                title: {
+                    text: '2018年1月浏览器市场份额'
+                },
+                tooltip: {
+                    pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                },
+                plotOptions: {
+                    pie: {
+                        allowPointSelect: true,
+                        cursor: 'pointer',
+                        dataLabels: {
+                            enabled: true,
+                            format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                            style: {
+                                color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+                            }
+                        }
+                    }
+                },
+                series: [{
+                    name: 'Brands',
+                    colorByPoint: true,
+                    data: [{
+                        name: 'Chrome',
+                        y: 61.41,
+                        sliced: true,
+                        selected: true
+                    }, {
+                        name: 'Internet Explorer',
+                        y: 11.84
+                    }, {
+                        name: 'Firefox',
+                        y: 10.85
+                    }, {
+                        name: 'Edge',
+                        y: 4.67
+                    }, {
+                        name: 'Safari',
+                        y: 4.18
+                    }, {
+                        name: 'Sogou Explorer',
+                        y: 1.64
+                    }, {
+                        name: 'Opera',
+                        y: 1.6
+                    }, {
+                        name: 'QQ',
+                        y: 1.2
+                    }, {
+                        name: 'Other',
+                        y: 2.61
+                    }]
+                }]
+            });
+
+
+        }
+    </script>
+{% endblock %}

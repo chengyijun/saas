@@ -48,6 +48,10 @@ def manage_nav(request: WSGIRequest):
         {
             "url": reverse("web:dashboard", kwargs={"project_id": request.tracer.current_project.id}),
             "text": "概览"
+        },
+        {
+            "url": reverse("web:statistics", kwargs={"project_id": request.tracer.current_project.id}),
+            "text": "统计"
         }
     ]
 
