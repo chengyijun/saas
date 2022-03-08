@@ -130,6 +130,7 @@ class LoginForm(BootstrapStyle, forms.Form):
         # 将登录用户 写入session
         else:
             self.request.session.update({"user_id": user.id})
+            self.request.session.set_expiry(60 * 60 * 24)
         return encrypt_password
 
     def clean_code(self):

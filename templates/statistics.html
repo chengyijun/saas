@@ -82,7 +82,6 @@
             }
             // 选择了日期 则按照日期区间绘制图表
             $("#dtp").daterangepicker(options, function (start, end) {
-                console.log("*******", start.format("YYYY-MM-DD"), end.add(1, "days").format("YYYY-MM-DD"))
                 let s = start.format("YYYY-MM-DD")
                 let e = end.add(1, "days").format("YYYY-MM-DD")
                 initCharts(s, e)
@@ -226,7 +225,6 @@
                 },
                 dataType: "json",
                 success: function (res) {
-                    console.log(res)
                     if (res.status) {
                         config.xAxis.categories = res.data.categories
                         config.series = res.data.series
