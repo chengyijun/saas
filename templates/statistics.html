@@ -35,7 +35,7 @@
                         </h3>
                     </div>
                     <div class="panel-body">
-                        面板内容
+                        <div id="lc" style="min-width:400px;height:400px"></div>
                     </div>
                 </div>
             </div>
@@ -62,7 +62,8 @@
     <script>
         $(function () {
             initDateTimePicker()
-            initCharts()
+
+            initChart2()
         })
 
         function initDateTimePicker() {
@@ -79,13 +80,26 @@
                 },
 
             }
+            // 选择了日期 则按照日期区间绘制图表
             $("#dtp").daterangepicker(options, function (start, end) {
-                console.log(start.format("YYYY-MM-DD"), end.add(1, "days").format("YYYY-MM-DD"))
+                console.log("*******", start.format("YYYY-MM-DD"), end.add(1, "days").format("YYYY-MM-DD"))
+                let s = start.format("YYYY-MM-DD")
+                let e = end.add(1, "days").format("YYYY-MM-DD")
+                initCharts(s, e)
+                initChart2(s, e)
             });
+
+
+            // 未选择日期 页面初始化的时候 默认当天为时间范围 绘制图表
+            initCharts(moment().format("YYYY-MM-DD"), moment().add(1, "days").format("YYYY-MM-DD"))
+            initChart2(moment().format("YYYY-MM-DD"), moment().add(1, "days").format("YYYY-MM-DD"))
         }
 
-        function initCharts() {
+        function initCharts(start, end) {
             let config = {
+                credits: {
+                    enabled: false
+                },
                 chart: {
                     plotBackgroundColor: null,
                     plotBorderWidth: null,
@@ -117,20 +131,106 @@
                     data: []
                 }]
             };
-            getchart1(config)
+            getchart1(config, start, end)
 
         }
 
-        function getchart1(config) {
+        function getchart1(config, start, end) {
             $.ajax({
                 url: "{% url 'web:statistics_chart1' project_id=project_id %}",
                 type: "get",
+                data: {
+                    start: start,
+                    end: end,
+                },
+                dataType: "json",
+                success: function (res) {
+                    if (res.status) {
+                        config.series[0].data = res.datas
+                        Highcharts.chart('rc', config);
+                    } else {
+
+                    }
+                }
+            })
+        }
+
+        function initChart2(start, end) {
+            let config = {
+                chart: {
+                    type: 'column'
+                },
+                title: {
+                    text: '堆叠柱形图'
+                },
+                xAxis: {
+                    categories: []
+                },
+                yAxis: {
+                    min: 0,
+                    title: {
+                        text: '水果消费总量'
+                    },
+                    stackLabels: {  // 堆叠数据标签
+                        enabled: true,
+                        style: {
+                            fontWeight: 'bold',
+                            color: (Highcharts.theme && Highcharts.theme.textColor) || 'gray'
+                        }
+                    }
+                },
+                legend: {
+                    align: 'right',
+                    x: -30,
+                    verticalAlign: 'top',
+                    y: 25,
+                    floating: true,
+                    backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || 'white',
+                    borderColor: '#CCC',
+                    borderWidth: 1,
+                    shadow: false
+                },
+                tooltip: {
+                    formatter: function () {
+                        return '<b>' + this.x + '</b><br/>' +
+                            this.series.name + ': ' + this.y + '<br/>' +
+                            '总量: ' + this.point.stackTotal;
+                    }
+                },
+                plotOptions: {
+                    column: {
+                        stacking: 'normal',
+                        dataLabels: {
+                            enabled: true,
+                            color: (Highcharts.theme && Highcharts.theme.dataLabelsColor) || 'white',
+                            style: {
+                                // 如果不需要数据标签阴影，可以将 textOutline 设置为 'none'
+                                textOutline: '1px 1px black'
+                            }
+                        }
+                    }
+                },
+                series: []
+            };
+            getchart2(config, start, end)
+        }
+
+
+        function getchart2(config, start, end) {
+            $.ajax({
+                url: "{% url 'web:statistics_chart2' project_id=project_id %}",
+                type: "get",
+                data: {
+                    start: start,
+                    end: end
+                },
                 dataType: "json",
                 success: function (res) {
                     console.log(res)
                     if (res.status) {
-                        config.series[0].data = res.datas
-                        Highcharts.chart('rc', config);
+                        config.xAxis.categories = res.data.categories
+                        config.series = res.data.series
+                        Highcharts.chart('lc', config);
                     } else {
 
                     }

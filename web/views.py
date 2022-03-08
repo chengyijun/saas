@@ -1,4 +1,5 @@
 # Create your views here.
+import copy
 import datetime
 import json
 from io import BytesIO
@@ -936,7 +937,6 @@ class DashboardView(View):
         :return:
         """
         res = Issues.objects.filter(project_id=project_id).values("status").annotate(st=Count("id"))
-        # print(res)
         target = {
             1: {"name": "新建", "value": 0},
             2: {"name": "处理中", "value": 0},
@@ -966,7 +966,6 @@ class DashboardChartsView(View):
         datas = Issues.objects.filter(project_id=project_id, create_datetime__gte=past30).extra(
             select={"ctime": "DATE_FORMAT(web_issues.create_datetime,'%%Y-%%m-%%d')"}).values("ctime").annotate(
             ct=Count("id"))
-        # print(datas)
         # <QuerySet [{'ctime': '2022-03-02', 'ct': 1}, {'ctime': '2022-03-06', 'ct': 1}]>
         for data in datas:
             target_dict[data["ctime"]][1] = data["ct"]
@@ -987,13 +986,16 @@ class StatisticsView(View):
 
 class StatisticsChart1View(View):
     def get(self, request: WSGIRequest, project_id: int):
-        ds = Issues.objects.filter(project_id=project_id).values("priority").annotate(d=Count("id"))
+        get_dict = request.GET.dict()
+
+        ds = Issues.objects.filter(project_id=project_id, create_datetime__gte=get_dict.get("start"),
+                                   create_datetime__lte=get_dict.get("end")).values("priority").annotate(
+            d=Count("id"))
         target = {}
         for k, v in Issues.priority_choices:
             target.update({k: {"name": v, "y": 0}})
         for d in ds:
             target[d.get("priority")]["y"] = d.get("d")
-        # print(list(target.values()))
 
         datas = list(target.values())
         datas[0].update({
@@ -1003,4 +1005,81 @@ class StatisticsChart1View(View):
         return JsonResponse({
             "status": True,
             "datas": datas
+        })
+
+
+class StatisticsChart2View(View):
+    def get(self, request: WSGIRequest, project_id: int):
+        get_dict = request.GET.dict()
+        if not get_dict:
+            return JsonResponse({
+                "status": False,
+                "data": {
+                    "categories": [],
+                    "series": []
+                }
+            })
+        target = {}
+        for k, v in Issues.status_choices:
+            target.update({k: {"name": v, "value": 0}})
+
+        res = Issues.objects.filter(project_id=project_id, create_datetime__gte=get_dict.get("start"),
+                                    create_datetime__lte=get_dict.get("end")).values("assign").annotate(ct=Count("id"))
+
+        if not res:
+            return JsonResponse({
+                "status": False,
+                "data": {
+                    "categories": [],
+                    "series": []
+                }
+            })
+
+        xs = []
+
+        for r in res:
+            xs.append(r.get("assign"))
+
+        data = {}
+        for x in xs:
+            data.update({x: target})
+
+        data2 = {}
+        for k, v in enumerate(xs):
+            ts = Issues.objects.filter(project_id=project_id, assign_id=v,
+                                       create_datetime__gte=get_dict.get("start"),
+                                       create_datetime__lte=get_dict.get("end")).values("status").annotate(
+                ct=Count("id"))
+            data2.update({v: list(ts)})
+
+        for k, vs in data2.items():
+            tmp = copy.deepcopy(target)
+            for v in vs:
+                tmp[v.get("status")]["value"] = v.get("ct")
+            data[k] = tmp
+
+        ss = []
+        for i in range(1, 8):
+            tmp = []
+            name = ""
+            for k, v in data.items():
+                tmp.append(v.get(i).get("value"))
+                name = v.get(i).get("name")
+            ss.append({
+                "name": name,
+                "data": tmp
+            })
+        cate = []
+
+        for x in xs:
+            if not x:
+                cate.append("未分配")
+            else:
+                cate.append(UserInfo.objects.filter(id=x).first().username)
+        return JsonResponse({
+            "status": True,
+            "data": {
+                "categories": cate,
+                "series": ss
+            }
         })
