@@ -505,7 +505,10 @@ class IssuesView(View):
         joins = ProjectUser.objects.filter(project_id=project_id)
         if joins:
             assign_datas.extend(list(set(joins.values_list("user_id", "user__username"))))
-        assign_datas.remove((None, None))
+        try:
+            assign_datas.remove((None, None))
+        except:
+            pass
 
         # 创建邀请的表单
         invite_form = InviteModelForm(request)
