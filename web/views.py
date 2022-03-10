@@ -810,11 +810,12 @@ class MduploadView(View):
                 f.write(chuck)
 
         # markdown-editor 消息通知的固定格式
+
         res = {
             "success": 1,
             "message": "success!",
             "url":
-                f"http://127.0.0.1:8000/project/1/wiki/mddownload/{file.name}/"
+                f"{request.scheme}://{request.get_host()}/project/1/wiki/mddownload/{file.name}/"
         }
         response = JsonResponse(res)
         # 设置此消息头 放行frame的跨域问题 markdown-editor要求的
