@@ -828,7 +828,8 @@ class MduploadView(View):
 class MddownloadView(View):
 
     def get(self, request: WSGIRequest, project_id: int, filename: str):
-        target_file = Path("uploads").resolve().joinpath(filename)
+        uploads = settings.WEB_UPLOADS_DIR
+        target_file = uploads.resolve().joinpath(filename)
         return FileResponse(FileWrapper(open(target_file, "rb")))
 
 
