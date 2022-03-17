@@ -161,3 +161,9 @@ CORS_ORIGIN_ALLOW_ALL = True
 # 允许所有的请求头
 CORS_ALLOW_HEADERS = ['*']
 # X_FRAME_OPTIONS = 'ALLOWALL url'
+
+
+# 设置上传文件夹
+WEB_UPLOADS_DIR = BASE_DIR.joinpath("uploads")
+# 设置web app的静态文件夹
+WEB_STATIC_DIR = BASE_DIR.joinpath("static")

@@ -32,13 +32,19 @@ def create_png() -> Tuple[Image.Image, str]:
 
     draw = ImageDraw.Draw(img)
     # get a font
-    fnt = ImageFont.truetype("static/1.ttf", 40)
+    fnt = ImageFont.truetype(f"{settings.WEB_STATIC_DIR}/1.ttf", 40)
     draw.text((2, 0), code, font=fnt, fill=(0, 0, 0, 255))
     return img, code
 
 
 def get_order() -> str:
     return str(uuid.uuid4())
+
+
+def create_uploads_dir():
+    uploads = settings.WEB_UPLOADS_DIR
+    if not uploads.exists():
+        uploads.mkdir(mode=777, exist_ok=True)
 
 
 if __name__ == '__main__':

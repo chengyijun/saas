@@ -19,11 +19,12 @@ from django.utils.encoding import escape_uri_path
 from django.utils.safestring import mark_safe
 from django.views import View
 
+from saas import settings
 from web.forms import RegisterModelForm, SMSLoginForm, LoginForm, ProjectModelForm, WikiModelForm, \
     FileRepositoryModelForm, IssuesModelForm, InviteModelForm
 from web.models import Transaction, PricePolicy, Project, ProjectUser, Wiki, FileRepository, IssuesType, Issues, \
     IssuesReply, UserInfo, Invite
-from web.utils.func import send_sms, create_png, get_order
+from web.utils.func import send_sms, create_png, get_order, create_uploads_dir
 from web.utils.pagination import Pagination
 
 
@@ -802,8 +803,9 @@ class DirectoryTreeView(View):
 class MduploadView(View):
 
     def post(self, request: WSGIRequest, project_id: int):
+        create_uploads_dir()
         file: InMemoryUploadedFile = request.FILES.get("editormd-image-file")
-        uploads = Path("uploads")
+        uploads = settings.WEB_UPLOADS_DIR
         target_file = uploads.resolve().joinpath(file.name)
         with open(target_file, "wb") as f:
             for chuck in file.chunks():
