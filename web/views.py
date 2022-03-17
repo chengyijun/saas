@@ -3,7 +3,6 @@ import copy
 import datetime
 import json
 from io import BytesIO
-from pathlib import Path
 from typing import Tuple, List, Dict
 from uuid import uuid4
 from wsgiref.util import FileWrapper
@@ -306,7 +305,7 @@ class FileView(View):
     def post(self, request: WSGIRequest, project_id: int, parent_id: int):
 
         file: InMemoryUploadedFile = request.FILES.get("file")
-        uploads = Path("uploads")
+        uploads = settings.WEB_UPLOADS_DIR
         target_file = uploads.resolve().joinpath(file.name)
         with open(target_file, "wb") as f:
             for chuck in file.chunks():
@@ -365,7 +364,8 @@ class FileDeleteView(View):
             # 删除文件
             if file.file_type == 1:
                 # missing_ok=True 表示如果删除的文件不存在 则什么也不做 不报错
-                Path(f"uploads/{file.name}").unlink(missing_ok=True)
+                upload = settings.WEB_UPLOADS_DIR
+                upload.joinpath(file.name).unlink(missing_ok=True)
             # 删除文件 数据库记录
             file.delete()
 
@@ -388,7 +388,8 @@ class FileDownloadView(View):
         file: FileRepository = FileRepository.objects.filter(
             id=file_id).first()
         if file:
-            file_path = Path(f"uploads/{file.name}")
+            uploads = settings.WEB_UPLOADS_DIR
+            file_path = uploads.joinpath(file.name)
             try:
                 response = FileResponse(open(file_path, 'rb'))
                 response['content_type'] = "application/octet-stream"
